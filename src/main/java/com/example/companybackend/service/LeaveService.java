@@ -235,6 +235,19 @@ public class LeaveService {
     }
 
     /**
+     * ユーザーの休暇申請一覧取得（フィルタリング付き）
+     * @param userId ユーザーID
+     * @param startDate 開始日（オプション）
+     * @param endDate 終了日（オプション）
+     * @param leaveType 休暇タイプ（オプション）
+     * @return フィルタリングされた休暇申請リスト
+     */
+    @Transactional(readOnly = true)
+    public List<LeaveRequest> getUserLeaveRequests(Long userId, LocalDate startDate, LocalDate endDate, String leaveType) {
+        return leaveRequestRepository.findByUserIdAndFilters(userId.intValue(), startDate, endDate, leaveType);
+    }
+
+    /**
      * ステータス別休暇申請取得
      * @param status ステータス ("pending", "approved", "rejected")
      * @return 休暇申請リスト
@@ -391,6 +404,21 @@ public class LeaveService {
     @Transactional(readOnly = true)
     public Optional<LeaveRequest> getLeaveRequestById(Long requestId) {
         return leaveRequestRepository.findById(requestId);
+    }
+
+    /**
+     * 有給休暇の残日数計算
+     * @param userId ユーザーID
+     * @return 残日数
+     */
+    @Transactional(readOnly = true)
+    public long calculateRemainingPaidLeaveDays(Long userId) {
+        // 仮の実装: 固定で20日を設定し、使用した日数を差し引く
+        long totalPaidLeaveDays = 20; // 年間の有給休暇日数
+        long usedPaidLeaveDays = getApprovedLeaveDays(userId, 
+            LocalDate.now().withDayOfYear(1), // 年初め
+            LocalDate.now().withDayOfYear(LocalDate.now().lengthOfYear())); // 年末
+        return totalPaidLeaveDays - usedPaidLeaveDays;
     }
 
     /**

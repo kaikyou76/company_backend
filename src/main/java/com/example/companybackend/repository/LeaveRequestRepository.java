@@ -38,6 +38,29 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     List<LeaveRequest> findByUserId(Long userId);
 
     /**
+     * ユーザーIDとフィルター条件による休暇申請取得
+     * @param userId ユーザーID
+     * @param startDate 開始日（オプション）
+     * @param endDate 終了日（オプション）
+     * @param leaveType 休暇タイプ（オプション）
+     * @return 条件に一致する休暇申請リスト
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT lr.* FROM leave_requests lr 
+        WHERE lr.user_id = :userId
+        AND (:startDate IS NULL OR lr.end_date >= :startDate)
+        AND (:endDate IS NULL OR lr.start_date <= :endDate)
+        AND (:leaveType IS NULL OR lr.type = :leaveType)
+        ORDER BY lr.start_date DESC
+        """)
+    List<LeaveRequest> findByUserIdAndFilters(
+        @Param("userId") Integer userId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        @Param("leaveType") String leaveType
+    );
+
+    /**
      * ステータス別休暇申請取得
      * @param status 申請ステータス
      * @return 該当ステータスの休暇申請リスト
