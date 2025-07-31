@@ -32,7 +32,6 @@ import java.util.Optional;
 @RequestMapping("/api/v1/time-corrections")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class TimeCorrectionController {
 
     private final TimeCorrectionService timeCorrectionService;

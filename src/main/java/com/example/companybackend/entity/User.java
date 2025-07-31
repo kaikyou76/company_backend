@@ -243,8 +243,14 @@ public class User implements UserDetails {
     // UserDetails methods
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Simple implementation - in a real application, you would map roles/permissions
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        // 根据用户角色返回权限
+        if ("admin".equals(role)) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        } else if ("manager".equals(role)) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_MANAGER"));
+        } else {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        }
     }
 
     @Override

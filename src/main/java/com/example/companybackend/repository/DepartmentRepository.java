@@ -38,6 +38,13 @@ public interface DepartmentRepository extends JpaRepository<Department, Integer>
     boolean existsByName(String name);
 
     /**
+     * 部署コードによる存在確認
+     * @param code 部署コード
+     * @return 存在するかどうか
+     */
+    boolean existsByCode(String code);
+
+    /**
      * マネージャーIDによる部署検索
      * @param managerId マネージャーID
      * @return 部署リスト

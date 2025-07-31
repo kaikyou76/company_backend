@@ -1,6 +1,12 @@
 package com.example.companybackend.service;
 
+import com.example.companybackend.dto.auth.AdminPositionsResponse;
+import com.example.companybackend.dto.auth.CsvUserData;
+import com.example.companybackend.entity.Department;
+import com.example.companybackend.entity.Position;
 import com.example.companybackend.entity.User;
+import com.example.companybackend.repository.DepartmentRepository;
+import com.example.companybackend.repository.PositionRepository;
 import com.example.companybackend.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,15 +31,21 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final PositionRepository positionRepository;
+    private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProviderService tokenProvider;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
+                       PositionRepository positionRepository,
+                       DepartmentRepository departmentRepository,
                        PasswordEncoder passwordEncoder,
                        JwtTokenProviderService tokenProvider) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
+        this.positionRepository = positionRepository;
+        this.departmentRepository = departmentRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
     }
@@ -40,7 +53,7 @@ public class AuthService {
     /**
      * ユーザー認証とトークン生成
      */
-    public Map<String, String> authenticateUser(String username, String password) {
+    public String authenticateUser(String username, String password) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password)
@@ -48,14 +61,7 @@ public class AuthService {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
-            String jwt = tokenProvider.generateToken(authentication);
-            String refreshToken = tokenProvider.generateRefreshToken(authentication);
-            
-            Map<String, String> tokens = new HashMap<>();
-            tokens.put("accessToken", jwt);
-            tokens.put("refreshToken", refreshToken);
-            
-            return tokens;
+            return tokenProvider.generateToken(authentication);
         } catch (Exception e) {
             throw new RuntimeException("認証に失敗しました: " + e.getMessage());
         }
@@ -79,6 +85,9 @@ public class AuthService {
         user.setUpdatedAt(now);
         
         // manager_id, department_id, position_idはデフォルトでnull（後で管理者が設定可能）
+        user.setManagerId(null);
+        user.setDepartmentId(null);
+        user.setPositionId(null);
         
         return userRepository.save(user);
     }
@@ -86,10 +95,32 @@ public class AuthService {
     /**
      * 管理者によるユーザー登録
      */
-    public User registerUserByAdmin(User user) {
+    public User registerUserByAdmin(User user, String adminUsername) {
+        // 管理者権限チェック
+        User adminUser = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new RuntimeException("管理者ユーザーが見つかりません"));
+        
+        // 管理者レベルチェック（level >= 5）
+        Position adminPosition = positionRepository.findById(adminUser.getPositionId())
+                .orElseThrow(() -> new RuntimeException("管理者の役職が見つかりません"));
+        
+        if (adminPosition.getLevel() < 5) {
+            throw new RuntimeException("権限が不足しています。管理者ユーザーのみ登録可能です。");
+        }
+
         // ユーザー名重複チェック
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("ユーザー名は既に使用されています");
+        }
+
+        // 役職の存在チェック
+        if (user.getPositionId() != null && !positionRepository.existsById(user.getPositionId())) {
+            throw new RuntimeException("指定された役職は存在しません");
+        }
+
+        // 部署の存在チェック
+        if (user.getDepartmentId() != null && !departmentRepository.existsById(user.getDepartmentId())) {
+            throw new RuntimeException("指定された部署は存在しません");
         }
 
         // パスワードハッシュ化
@@ -99,9 +130,6 @@ public class AuthService {
         OffsetDateTime now = OffsetDateTime.now();
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
-        
-        // 管理者による登録では部署、役職、マネージャーの設定を許可
-        // これらの値は既にuserオブジェクトに設定されているとみなす
         
         return userRepository.save(user);
     }
@@ -114,151 +142,140 @@ public class AuthService {
     }
     
     /**
+     * ユーザー名からユーザー情報を取得
+     */
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
+    }
+
+    /**
      * ユーザー名存在チェック
      */
     public boolean checkUsernameExists(String username) {
         return userRepository.existsByUsername(username);
     }
-    
+
     /**
-     * CSVファイルからユーザー一括登録
-     * CSVフォーマット: username,password,location_type,client_latitude,client_longitude,department_id,position_id,manager_id
+     * 部署IDから部署名を取得
      */
-    public String registerUsersFromCsv(MultipartFile file) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            List<String> lines = reader.lines().collect(Collectors.toList());
-            
-            if (lines.isEmpty()) {
-                throw new RuntimeException("CSVファイルが空です");
-            }
-            
-            // ヘッダー行をチェック
-            String header = lines.get(0);
-            if (!isValidCsvHeader(header)) {
-                throw new RuntimeException("CSVヘッダーが正しくありません。期待される形式: username,password,location_type,client_latitude,client_longitude,department_id,position_id,manager_id");
-            }
-            
-            // ユーザーデータを解析
-            List<User> users = lines.stream()
-                    .skip(1) // ヘッダー行をスキップ
-                    .filter(line -> !line.trim().isEmpty()) // 空行をスキップ
-                    .map(this::parseUserFromCsvLine)
-                    .collect(Collectors.toList());
+    public String getDepartmentNameById(Integer departmentId) {
+        if (departmentId == null) {
+            return null;
+        }
+        
+        return departmentRepository.findById(departmentId)
+                .map(Department::getName)
+                .orElse(null);
+    }
 
-            if (users.isEmpty()) {
-                throw new RuntimeException("有効なユーザーデータが見つかりません");
-            }
+    /**
+     * 役職IDから役職名を取得
+     */
+    public String getPositionNameById(Integer positionId) {
+        if (positionId == null) {
+            return null;
+        }
+        
+        return positionRepository.findById(positionId)
+                .map(Position::getName)
+                .orElse(null);
+    }
 
-            // ユーザー名重複チェック（DB内での重複）
-            List<String> existingUsernames = users.stream()
-                    .filter(user -> userRepository.existsByUsername(user.getUsername()))
-                    .map(User::getUsername)
-                    .collect(Collectors.toList());
-            
-            if (!existingUsernames.isEmpty()) {
-                throw new RuntimeException("データベース内に重複ユーザー名が存在します: " + String.join(", ", existingUsernames));
-            }
-            
-            // CSV内での重複チェック
-            List<String> csvUsernames = users.stream().map(User::getUsername).collect(Collectors.toList());
-            List<String> duplicatesInCsv = csvUsernames.stream()
-                    .filter(name -> csvUsernames.indexOf(name) != csvUsernames.lastIndexOf(name))
-                    .distinct()
-                    .collect(Collectors.toList());
-                    
-            if (!duplicatesInCsv.isEmpty()) {
-                throw new RuntimeException("CSV内に重複ユーザー名が存在します: " + String.join(", ", duplicatesInCsv));
-            }
+    /**
+     * 管理者役職一覧取得
+     */
+    public List<AdminPositionsResponse.PositionData> getAdminPositions() {
+        // level >= 5 の役職を取得
+        List<Position> positions = positionRepository.findByLevelGreaterThanEqualOrderByLevelDesc(5);
+        
+        return positions.stream()
+                .map(position -> new AdminPositionsResponse.PositionData(
+                        position.getId(),
+                        position.getName(),
+                        position.getLevel()))
+                .collect(Collectors.toList());
+    }
 
-            // パスワードハッシュ化してバッチ保存
-            OffsetDateTime now = OffsetDateTime.now();
-            users.forEach(user -> {
-                user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+    /**
+     * CSVからのユーザー一括登録
+     */
+    public int[] registerUsersFromCsv(List<CsvUserData> csvUsers) {
+        int successCount = 0;
+        int errorCount = 0;
+        
+        for (CsvUserData csvUser : csvUsers) {
+            try {
+                User user = new User();
+                user.setUsername(csvUser.getUsername());
+                user.setPasswordHash(passwordEncoder.encode(csvUser.getPassword()));
+                user.setFullName(csvUser.getFullName());
+                user.setLocationType(csvUser.getLocationType());
+                user.setClientLatitude(csvUser.getClientLatitude());
+                user.setClientLongitude(csvUser.getClientLongitude());
+                user.setDepartmentId(csvUser.getDepartmentId());
+                user.setPositionId(csvUser.getPositionId());
+                user.setManagerId(csvUser.getManagerId());
+                
+                // 作成日時と更新日時を設定
+                OffsetDateTime now = OffsetDateTime.now();
                 user.setCreatedAt(now);
                 user.setUpdatedAt(now);
-            });
-            
-            userRepository.saveAll(users);
+                
+                // ユーザー名重複チェック
+                if (userRepository.existsByUsername(user.getUsername())) {
+                    errorCount++;
+                    continue;
+                }
+                
+                userRepository.save(user);
+                successCount++;
+            } catch (Exception e) {
+                errorCount++;
+                // エラーがあっても他のユーザーの登録を続行
+            }
+        }
+        
+        return new int[]{successCount, errorCount};
+    }
 
-            return users.size() + "人のユーザーを登録しました";
-        } catch (RuntimeException e) {
-            throw e; // カスタム例外は再スロー
+    /**
+     * CSVファイルからのユーザー一括登録（既存メソッドの互換性維持）
+     */
+    public String registerUsersFromCsv(MultipartFile file) {
+        try {
+            List<CsvUserData> csvUsers = new ArrayList<>();
+            
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+                String line;
+                boolean isFirstLine = true;
+                
+                while ((line = reader.readLine()) != null) {
+                    if (isFirstLine) {
+                        isFirstLine = false;
+                        continue; // ヘッダー行をスキップ
+                    }
+                    
+                    String[] values = line.split(",");
+                    if (values.length >= 3) {
+                        CsvUserData user = new CsvUserData();
+                        user.setUsername(values[0]);
+                        user.setPassword(values[1]);
+                        user.setFullName(values[2]);
+                        // 他のフィールドも必要に応じて設定
+                        csvUsers.add(user);
+                    }
+                }
+            }
+            
+            int[] result = registerUsersFromCsv(csvUsers);
+            return String.format("登録成功: %d件, 登録失敗: %d件", result[0], result[1]);
+            
         } catch (Exception e) {
-            throw new RuntimeException("CSVファイル処理エラー: " + e.getMessage(), e);
+            throw new RuntimeException("CSVファイルの処理中にエラーが発生しました: " + e.getMessage());
         }
     }
     
-    /**
-     * CSVヘッダーの妥当性チェック
-     */
-    private boolean isValidCsvHeader(String header) {
-        String expectedHeader = "username,password,location_type,client_latitude,client_longitude,department_id,position_id,manager_id";
-        return expectedHeader.equalsIgnoreCase(header.trim());
-    }
-
-    /**
-     * CSV行からユーザーオブジェクトへの変換
-     * フォーマット: username,password,location_type,client_latitude,client_longitude,department_id,position_id,manager_id
-     */
-    private User parseUserFromCsvLine(String line) {
-        String[] values = line.split(",", -1); // -1を使用して空文字も含める
-        if (values.length < 3) {
-            throw new RuntimeException("無効なCSV形式: " + line);
-        }
-
-        User user = new User();
-        
-        // 必須項目
-        user.setUsername(values[0].trim());
-        user.setPasswordHash(values[1].trim());
-        user.setLocationType(values[2].trim());
-        
-        // バリデーション
-        if (user.getUsername().isEmpty()) {
-            throw new RuntimeException("ユーザー名が空です: " + line);
-        }
-        if (user.getPasswordHash().isEmpty()) {
-            throw new RuntimeException("パスワードが空です: " + line);
-        }
-        if (!"office".equals(user.getLocationType()) && !"client".equals(user.getLocationType())) {
-            throw new RuntimeException("勤務場所タイプは 'office' または 'client' である必要があります: " + line);
-        }
-        
-        // オプション項目の処理
-        if (values.length > 3 && !values[3].trim().isEmpty()) {
-            user.setClientLatitude(parseDoubleSafely(values[3].trim(), line));
-        }
-        
-        if (values.length > 4 && !values[4].trim().isEmpty()) {
-            user.setClientLongitude(parseDoubleSafely(values[4].trim(), line));
-        }
-        
-        if (values.length > 5 && !values[5].trim().isEmpty()) {
-            user.setDepartmentId(parseIntegerSafely(values[5].trim(), line));
-        }
-        
-        if (values.length > 6 && !values[6].trim().isEmpty()) {
-            user.setPositionId(parseIntegerSafely(values[6].trim(), line));
-        }
-        
-        if (values.length > 7 && !values[7].trim().isEmpty()) {
-            user.setManagerId(parseIntegerSafely(values[7].trim(), line));
-        }
-        
-        // クライアント勤務の場合の緯度経度整合性チェック
-        if ("client".equals(user.getLocationType())) {
-            if ((user.getClientLatitude() == null) != (user.getClientLongitude() == null)) {
-                throw new RuntimeException("クライアント勤務地の緯度と経度は両方設定するか、両方nullにする必要があります: " + line);
-            }
-        } else {
-            // オフィス勤務の場合は緯度経度をnullに設定
-            user.setClientLatitude(null);
-            user.setClientLongitude(null);
-        }
-        
-        return user;
-    }
-
     /**
      * 安全なdouble変換
      */

@@ -9,6 +9,10 @@ import lombok.Data;
  * 登録リクエストDTO
  * comsys_dump.sql usersテーブル準拠
  */
+/**
+ * 登録リクエストDTO
+ * comsys_dump.sql usersテーブル準拠
+ */
 @Data
 public class RegisterRequest {
     
@@ -18,6 +22,9 @@ public class RegisterRequest {
     
     @NotBlank(message = "パスワードは必須です")
     private String password;
+    
+    @NotBlank(message = "パスワード確認は必須です")
+    private String confirmPassword;
     
     @NotBlank(message = "氏名は必須です")
     private String fullName;

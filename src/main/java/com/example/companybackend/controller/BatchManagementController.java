@@ -34,7 +34,7 @@ public class BatchManagementController {
      * batch_job_instanceテーブル活用
      */
     @GetMapping("/instances")
-    public ResponseEntity<Map<String, Object>> getAllJobInstances() {
+    public ResponseEntity<Map<String, Object>> getJobInstances() {
         try {
             List<Map<String, Object>> instances = batchMonitoringService.getAllJobInstances();
             

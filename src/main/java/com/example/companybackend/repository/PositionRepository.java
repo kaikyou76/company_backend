@@ -53,6 +53,13 @@ public interface PositionRepository extends JpaRepository<Position, Integer> {
     List<Position> findByLevelBetween(Integer minLevel, Integer maxLevel);
 
     /**
+     * 指定レベル以上の役職をレベル降順で取得
+     * @param level 最小レベル
+     * @return 指定レベル以上の役職リスト（レベル降順）
+     */
+    List<Position> findByLevelGreaterThanEqualOrderByLevelDesc(Integer level);
+
+    /**
      * 管理職レベル以上の役職取得
      * @return 管理職レベル（レベル4以上）の役職リスト
      */
@@ -99,8 +106,15 @@ public interface PositionRepository extends JpaRepository<Position, Integer> {
      * 最高レベルの役職取得
      * @return 最高レベルの役職
      */
-    @Query(nativeQuery = true, value = "SELECT p.* FROM positions p WHERE p.level = (SELECT MAX(level) FROM positions)")
-    List<Position> findTopLevelPositions();
+    @Query(nativeQuery = true, value = "SELECT * FROM positions p ORDER BY p.level DESC LIMIT 1")
+    Optional<Position> findHighestLevelPosition();
+
+    /**
+     * 最低レベルの役職取得
+     * @return 最低レベルの役職
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM positions p ORDER BY p.level ASC LIMIT 1")
+    Optional<Position> findLowestLevelPosition();
 
     /**
      * 特定レベル以上の役職数取得
@@ -184,4 +198,13 @@ public interface PositionRepository extends JpaRepository<Position, Integer> {
         )
         """)
     List<Position> findNextLevelPositions(@Param("currentLevel") Integer currentLevel);
+
+    /**
+     * レベル範囲による役職数カウント
+     * @param minLevel 最小レベル
+     * @param maxLevel 最大レベル
+     * @return 役職数
+     */
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM positions p WHERE p.level BETWEEN :minLevel AND :maxLevel")
+    int countByLevelBetween(@Param("minLevel") Integer minLevel, @Param("maxLevel") Integer maxLevel);
 }

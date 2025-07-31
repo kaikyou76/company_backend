@@ -1,0 +1,247 @@
+package com.example.companybackend.controller;
+
+import com.example.companybackend.entity.User;
+import com.example.companybackend.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(UserController.class)
+@Import({UserController.class})
+public class UserControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private UserService userService;
+
+    private User testUser;
+    private List<User> testUsers;
+
+    @BeforeEach
+    void setUp() {
+        // テスト用のユーザーデータを準備
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setEmployeeId("EMP001");
+        testUser.setFullName("田中太郎");
+        testUser.setEmail("tanaka@example.com");
+        testUser.setRole("admin");
+        testUser.setDepartmentId(1);
+        testUser.setPositionId(1);
+        testUser.setHireDate(LocalDate.of(2020, 4, 1));
+        testUser.setPhone("090-1234-5678");
+        testUser.setPasswordHash("password");
+        testUser.setCreatedAt(OffsetDateTime.now());
+        testUser.setUpdatedAt(OffsetDateTime.now());
+        testUser.setIsActive(true);
+
+        testUsers = Arrays.asList(testUser);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testGetUsers_Success() throws Exception {
+        // given
+        Map<String, Object> usersData = new HashMap<>();
+        usersData.put("users", testUsers);
+        usersData.put("totalCount", 1L);
+        usersData.put("currentPage", 0);
+        usersData.put("totalPages", 1);
+
+        when(userService.getUsers(0, 10, null, null, null, null, null))
+                .thenReturn(usersData);
+
+        // when & then
+        mockMvc.perform(get("/api/users/list")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.users.length()").value(1))
+                .andExpect(jsonPath("$.data.totalCount").value(1));
+
+        verify(userService, times(1)).getUsers(0, 10, null, null, null, null, null);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testGetUserById_Success() throws Exception {
+        // given
+        when(userService.findById(1L)).thenReturn(testUser);
+
+        // when & then
+        mockMvc.perform(get("/api/users/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1));
+
+        verify(userService, times(1)).findById(1L);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testCreateUser_Success() throws Exception {
+        // given
+        when(userService.createUser(any(User.class))).thenReturn(testUser);
+
+        String userJson = "{"
+                + "\"username\":\"newuser\","
+                + "\"fullName\":\"新規ユーザー\","
+                + "\"email\":\"new@example.com\","
+                + "\"passwordHash\":\"password\","
+                + "\"locationType\":\"office\""
+                + "}";
+
+        // when & then
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(userJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1));
+
+        verify(userService, times(1)).createUser(any(User.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testUpdateUser_Success() throws Exception {
+        // given
+        User updatedUser = new User();
+        updatedUser.setId(1L);
+        updatedUser.setFullName("田中太郎（更新）");
+        updatedUser.setEmail("tanaka.updated@example.com");
+        updatedUser.setPhone("080-9999-8888");
+        updatedUser.setUpdatedAt(OffsetDateTime.now());
+
+        when(userService.findById(1L)).thenReturn(testUser);
+        when(userService.updateUser(eq(1L), any(User.class))).thenReturn(updatedUser);
+
+        String updateJson = "{"
+                + "\"fullName\":\"田中太郎（更新）\","
+                + "\"email\":\"tanaka.updated@example.com\","
+                + "\"phone\":\"080-9999-8888\""
+                + "}";
+
+        // when & then
+        mockMvc.perform(put("/api/users/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.name").value("田中太郎（更新）"));
+
+        verify(userService, times(1)).findById(1L);
+        verify(userService, times(1)).updateUser(eq(1L), any(User.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteUser_Success() throws Exception {
+        // given
+        when(userService.findById(1L)).thenReturn(testUser);
+        doNothing().when(userService).deleteUser(1L);
+
+        // when & then
+        mockMvc.perform(delete("/api/users/{id}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("ユーザーが正常に削除されました"));
+
+        verify(userService, times(1)).findById(1L);
+        verify(userService, times(1)).deleteUser(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "testuser")
+    void testGetCurrentUser_Success() throws Exception {
+        // given
+        when(userService.findByUsername("testuser")).thenReturn(testUser);
+
+        // when & then
+        mockMvc.perform(get("/api/users/profile")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1));
+
+        verify(userService, times(1)).findByUsername("testuser");
+    }
+
+    @Test
+    @WithMockUser(username = "testuser")
+    void testChangePassword_Success() throws Exception {
+        // given
+        when(userService.changePassword(eq("testuser"), eq("oldPassword"), eq("newPassword"))).thenReturn(true);
+
+        String passwordJson = "{"
+                + "\"oldPassword\":\"oldPassword\","
+                + "\"newPassword\":\"newPassword\""
+                + "}";
+
+        // when & then
+        mockMvc.perform(post("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(passwordJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("パスワードが正常に変更されました"));
+
+        verify(userService, times(1)).changePassword(eq("testuser"), eq("oldPassword"), eq("newPassword"));
+    }
+
+    @Test
+    @WithMockUser(username = "testuser")
+    void testChangePassword_WrongOldPassword() throws Exception {
+        // given
+        when(userService.changePassword(eq("testuser"), eq("wrongPassword"), eq("newPassword"))).thenReturn(false);
+
+        String passwordJson = "{"
+                + "\"oldPassword\":\"wrongPassword\","
+                + "\"newPassword\":\"newPassword\""
+                + "}";
+
+        // when & then
+        mockMvc.perform(post("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(passwordJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("現在のパスワードが正しくありません"));
+
+        verify(userService, times(1)).changePassword(eq("testuser"), eq("wrongPassword"), eq("newPassword"));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")  // 使用USER角色而不是ADMIN
+    void testAdminAccessDenied_ForNonAdminUser() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/users/list")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("search", "")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());  // 应该返回403
+    }
+}
