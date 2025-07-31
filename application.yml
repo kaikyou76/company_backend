@@ -1,0 +1,4 @@
+batch:
+  error:
+    dir: /tmp/batch/errors
+    prefix: BATCH_ERR_
