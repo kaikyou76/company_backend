@@ -69,6 +69,10 @@ public class User implements UserDetails {
 
     @Column(name = "last_login_at")
     private OffsetDateTime lastLoginAt;
+    
+    // 添加跳过位置检查的字段
+    @Column(name = "skip_location_check")
+    private Boolean skipLocationCheck;
 
     // Constructors
     public User() {}
@@ -79,6 +83,7 @@ public class User implements UserDetails {
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
         this.isActive = true;
+        this.skipLocationCheck = false; // 默认不跳过位置チェック
     }
 
     // Getters and Setters
@@ -240,6 +245,14 @@ public class User implements UserDetails {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public Boolean getSkipLocationCheck() {
+        return skipLocationCheck;
+    }
+
+    public void setSkipLocationCheck(Boolean skipLocationCheck) {
+        this.skipLocationCheck = skipLocationCheck;
+    }
+
     // UserDetails methods
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -281,7 +294,7 @@ public class User implements UserDetails {
     
     /**
      * 获取角色显示名称
-     * @return 角色显示名称
+     * @return 角色表示名称
      */
     public String getRoleDisplayName() {
         if ("admin".equals(role)) {
@@ -296,8 +309,8 @@ public class User implements UserDetails {
     }
     
     /**
-     * 获取位置类型显示名称
-     * @return 位置类型显示名称
+     * 获取位置タイプ表示名称
+     * @return 位置タイプ表示名称
      */
     public String getLocationTypeDisplayName() {
         if ("office".equals(locationType)) {

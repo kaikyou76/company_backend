@@ -301,7 +301,7 @@ AttendanceControllerのエンドポイントは認証が必要なため、すべ
 
 テストは以下のMavenコマンドで実行できます：
 
-```bash
+```
 .\mvnw test -Dtest=AttendanceControllerTest
 ```
 
@@ -322,3 +322,161 @@ AttendanceControllerのエンドポイントは認証が必要なため、すべ
 - 日次サマリー取得: 2テストケース (正常系1、異常系1)
 
 合計8テストケースで、コントローラーの主要機能を網羅的にテストしています。
+
+# 考勤管理控制器测试说明
+
+## 1. 测试概述
+
+### 1.1 测试目标
+
+本测试旨在验证考勤管理控制器（[AttendanceController](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java)）的各个API端点是否按预期工作，确保：
+1. 所有API端点都能正确处理请求和返回响应
+2. 位置验证功能正常工作
+3. 数据验证和错误处理机制正常工作
+4. 服务层交互正确
+
+### 1.2 测试范围
+
+测试覆盖以下API端点：
+- `POST /api/attendance/clock-in` - 出勤打卡
+- `POST /api/attendance/clock-out` - 退勤打卡
+- `GET /api/attendance/records` - 获取考勤记录
+- `GET /api/attendance/daily-summary` - 获取日次汇总
+
+### 1.3 被测试的文件
+
+- 控制器文件：[AttendanceController.java](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java)
+- 测试文件：[AttendanceControllerTest.java](file:///F:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java)
+- 服务文件：[AttendanceService.java](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/service/AttendanceService.java)
+- 实体文件：[AttendanceRecord.java](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/entity/AttendanceRecord.java)
+
+## 2. 测试方法详解
+
+### 2.1 测试类结构
+
+[AttendanceControllerTest](file:///F:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java)类使用Spring Boot的测试框架，采用以下关键注解和配置：
+
+- `@WebMvcTest(AttendanceController.class)` - 仅加载Web层组件进行测试
+- `@MockBean` - 模拟服务层依赖
+- `@WithMockUser` - 模拟用户认证信息
+- `MockMvc` - 模拟HTTP请求和验证响应
+
+### 2.2 测试的具体方法
+
+#### 2.2.1 出勤打卡测试 ([clockIn](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L50-L83))
+
+测试方法：
+- `testClockIn_Success` - 测试成功出勤打卡
+- `testClockIn_InvalidLocation` - 测试出勤打卡位置验证失败
+- `testClockIn_SkipLocationCheck` - 测试跳过位置检查的出勤打卡
+
+被测试的控制器方法：
+- [AttendanceController.clockIn()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L50-L83)
+
+模拟的服务方法：
+- [AttendanceService.clockIn()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/service/AttendanceService.java#L78-L139)
+
+#### 2.2.2 退勤打卡测试 ([clockOut](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L91-L124))
+
+测试方法：
+- `testClockOut_Success` - 测试成功退勤打卡
+- `testClockOut_InvalidLocation` - 测试退勤打卡位置验证失败
+- `testClockOut_SkipLocationCheck` - 测试跳过位置检查的退勤打卡
+
+被测试的控制器方法：
+- [AttendanceController.clockOut()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L91-L124)
+
+模拟的服务方法：
+- [AttendanceService.clockOut()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/service/AttendanceService.java#L142-L199)
+
+#### 2.2.3 获取考勤记录测试 ([getAttendanceRecords](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L132-L157))
+
+测试方法：
+- `testGetAttendanceRecords_Success` - 测试成功获取考勤记录
+- `testGetAttendanceRecords_Exception` - 测试获取考勤记录时服务异常
+
+被测试的控制器方法：
+- [AttendanceController.getAttendanceRecords()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L132-L157)
+
+模拟的服务方法：
+- [AttendanceService.getTodayRecords()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/service/AttendanceService.java#L283-L285)
+
+#### 2.2.4 获取日次汇总测试 ([getDailySummary](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L165-L189))
+
+测试方法：
+- `testGetDailySummary_Success` - 测试成功获取日次汇总
+- `testGetDailySummary_Exception` - 测试获取日次汇总时服务异常
+
+被测试的控制器方法：
+- [AttendanceController.getDailySummary()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/controller/AttendanceController.java#L165-L189)
+
+模拟的服务方法：
+- [AttendanceService.getDailySummary()](file:///F:/Company_system_project/company_backend/src/main/java/com/example/companybackend/service/AttendanceService.java#L334-L360)
+
+## 3. 测试规范和技巧
+
+### 3.1 测试规范
+
+1. **使用@WebMvcTest进行切片测试**
+   - 仅加载Web层相关组件，提高测试效率
+   - 避免加载整个Spring上下文
+
+2. **使用@MockBean模拟依赖**
+   - 隔离被测试组件与其他组件的依赖关系
+   - 可以控制模拟对象的行为和返回值
+
+3. **使用@WithMockUser模拟认证**
+   - 模拟用户访问API
+   - 验证权限控制是否正确
+
+4. **遵循Given-When-Then模式**
+   - Given: 准备测试数据和模拟行为
+   - When: 执行被测试的方法
+   - Then: 验证结果是否符合预期
+
+### 3.2 测试技巧
+
+1. **全面覆盖成功和失败场景**
+   - 为每个API端点编写成功场景测试
+   - 编写各种失败场景测试（验证错误、权限错误等）
+
+2. **验证关键响应数据**
+   - 检查HTTP状态码是否正确
+   - 验证响应结构和关键字段值
+   - 确保错误消息清晰明确
+
+3. **使用真实数据**
+   - 使用合理的经纬度坐标
+   - 模拟真实业务场景的数据
+
+4. **验证方法调用**
+   - 使用Mockito的verify方法验证服务层方法是否被正确调用
+   - 验证方法调用次数是否符合预期
+
+## 4. 运行测试
+
+使用Maven命令运行测试：
+
+```
+./mvnw test -Dtest=AttendanceControllerTest
+```
+
+或者运行所有测试：
+
+```
+./mvnw test
+```
+
+## 5. 测试结果分析
+
+所有测试通过表明：
+1. 控制器方法能正确处理请求和响应
+2. 位置验证功能按预期工作
+3. 数据验证和错误处理机制正常
+4. 与服务层的交互正确
+
+如果测试失败，应检查：
+1. API端点路径是否正确
+2. 请求参数和响应结构是否匹配
+3. 模拟的服务方法行为是否正确
+4. 位置验证逻辑是否正确实现

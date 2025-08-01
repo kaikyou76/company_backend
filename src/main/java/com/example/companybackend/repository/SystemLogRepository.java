@@ -1,6 +1,8 @@
 package com.example.companybackend.repository;
 
 import com.example.companybackend.entity.SystemLog;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -257,4 +259,124 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
      */
     @Query(nativeQuery = true, value = "SELECT sl.* FROM system_logs sl WHERE jsonb_extract_path_text(sl.details, :jsonPath) = :value")
     List<SystemLog> findByJsonDetails(@Param("jsonPath") String jsonPath, @Param("value") String value);
+    
+    // 追加メソッド
+    
+    /**
+     * フィルター条件でログを検索（ページング対応）
+     * @param action アクション
+     * @param status ステータス
+     * @param startDate 開始日時
+     * @param endDate 終了日時
+     * @param pageable ページング情報
+     * @return ページングされたログリスト
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT sl.* FROM system_logs sl 
+        WHERE (:action IS NULL OR sl.action = :action)
+        AND (:status IS NULL OR sl.status = :status)
+        AND (:startDate IS NULL OR sl.created_at >= :startDate)
+        AND (:endDate IS NULL OR sl.created_at <= :endDate)
+        ORDER BY sl.created_at DESC
+        """)
+    Page<SystemLog> findByFilters(@Param("action") String action, 
+                                  @Param("status") String status,
+                                  @Param("startDate") OffsetDateTime startDate,
+                                  @Param("endDate") OffsetDateTime endDate,
+                                  Pageable pageable);
+                                  
+    /**
+     * エクスポート用にログを検索
+     * @param action アクション
+     * @param status ステータス
+     * @param startDate 開始日時
+     * @param endDate 終了日時
+     * @return ログリスト
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT sl.* FROM system_logs sl 
+        WHERE (:action IS NULL OR sl.action = :action)
+        AND (:status IS NULL OR sl.status = :status)
+        AND (:startDate IS NULL OR sl.created_at >= :startDate)
+        AND (:endDate IS NULL OR sl.created_at <= :endDate)
+        ORDER BY sl.created_at DESC
+        """)
+    List<SystemLog> findForExport(@Param("action") String action, 
+                                  @Param("status") String status,
+                                  @Param("startDate") OffsetDateTime startDate,
+                                  @Param("endDate") OffsetDateTime endDate);
+
+    /**
+     * アクション別カウント統計を取得
+     * @return アクション別カウント統計
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            sl.action as action,
+            COUNT(sl) as count
+        FROM system_logs sl 
+        GROUP BY sl.action
+        ORDER BY COUNT(sl) DESC
+        """)
+    List<java.util.Map<String, Object>> countByActionGrouped();
+
+    /**
+     * ステータス別カウント統計を取得
+     * @return ステータス別カウント統計
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            sl.status as status,
+            COUNT(sl) as count
+        FROM system_logs sl 
+        GROUP BY sl.status
+        ORDER BY COUNT(sl) DESC
+        """)
+    List<java.util.Map<String, Object>> countByStatusGrouped();
+
+    /**
+     * ユーザー別カウント統計を取得
+     * @return ユーザー別カウント統計
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            sl.user_id as userId,
+            COUNT(sl) as count
+        FROM system_logs sl 
+        WHERE sl.user_id IS NOT NULL
+        GROUP BY sl.user_id
+        ORDER BY COUNT(sl) DESC
+        """)
+    List<java.util.Map<String, Object>> countByUserGrouped();
+
+    /**
+     * 日別カウント統計を取得
+     * @return 日別カウント統計
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT 
+            DATE(sl.created_at) as date,
+            COUNT(sl) as count
+        FROM system_logs sl 
+        GROUP BY DATE(sl.created_at)
+        ORDER BY DATE(sl.created_at) DESC
+        """)
+    List<java.util.Map<String, Object>> countByDateGrouped();
+
+    /**
+     * キーワードでログを検索（ページング対応）
+     * @param keyword キーワード
+     * @param pageable ページング情報
+     * @return ページングされたログリスト
+     */
+    @Query(nativeQuery = true, value = """
+        SELECT sl.* FROM system_logs sl 
+        WHERE sl.action ILIKE '%' || :keyword || '%'
+        OR sl.status ILIKE '%' || :keyword || '%'
+        OR sl.ip_address ILIKE '%' || :keyword || '%'
+        OR sl.user_agent ILIKE '%' || :keyword || '%'
+        OR CAST(sl.user_id AS TEXT) ILIKE '%' || :keyword || '%'
+        ORDER BY sl.created_at DESC
+        """)
+    Page<SystemLog> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

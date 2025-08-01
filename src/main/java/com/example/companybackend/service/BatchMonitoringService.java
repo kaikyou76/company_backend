@@ -5,6 +5,8 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BatchMonitoringService {
     
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BatchMonitoringService.class);
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     private final JobExplorer jobExplorer;
 
@@ -84,8 +87,12 @@ public class BatchMonitoringService {
                 Map<String, Object> executionInfo = new HashMap<>();
                 executionInfo.put("jobExecutionId", execution.getId());
                 executionInfo.put("jobInstanceId", execution.getJobInstance().getInstanceId());
-                executionInfo.put("startTime", execution.getStartTime());
-                executionInfo.put("endTime", execution.getEndTime());
+                if (execution.getStartTime() != null) {
+                    executionInfo.put("startTime", DATE_TIME_FORMATTER.format(execution.getStartTime().atZone(ZoneId.systemDefault())));
+                }
+                if (execution.getEndTime() != null) {
+                    executionInfo.put("endTime", DATE_TIME_FORMATTER.format(execution.getEndTime().atZone(ZoneId.systemDefault())));
+                }
                 executionInfo.put("status", execution.getStatus().toString());
                 executionInfo.put("exitCode", execution.getExitStatus().getExitCode());
                 executions.add(executionInfo);
@@ -108,8 +115,12 @@ public class BatchMonitoringService {
                     Map<String, Object> stepInfo = new HashMap<>();
                     stepInfo.put("stepExecutionId", stepExecution.getId());
                     stepInfo.put("stepName", stepExecution.getStepName());
-                    stepInfo.put("startTime", stepExecution.getStartTime());
-                    stepInfo.put("endTime", stepExecution.getEndTime());
+                    if (stepExecution.getStartTime() != null) {
+                        stepInfo.put("startTime", DATE_TIME_FORMATTER.format(stepExecution.getStartTime().atZone(ZoneId.systemDefault())));
+                    }
+                    if (stepExecution.getEndTime() != null) {
+                        stepInfo.put("endTime", DATE_TIME_FORMATTER.format(stepExecution.getEndTime().atZone(ZoneId.systemDefault())));
+                    }
                     stepInfo.put("status", stepExecution.getStatus().toString());
                     stepInfo.put("commitCount", stepExecution.getCommitCount());
                     stepInfo.put("readCount", stepExecution.getReadCount());

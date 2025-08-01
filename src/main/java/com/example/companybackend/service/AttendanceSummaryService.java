@@ -83,4 +83,22 @@ public interface AttendanceSummaryService {
      * @return 月別統計情報
      */
     Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * 個人別勤怠統計情報取得
+     * @param userId ユーザーID
+     * @param startDate 開始日
+     * @param endDate 終了日
+     * @return 個人別統計情報
+     */
+    Map<String, Object> getPersonalAttendanceStatistics(Long userId, LocalDate startDate, LocalDate endDate);
+    
+    /**
+     * 部門別勤怠統計情報取得
+     * @param departmentId 部門ID
+     * @param startDate 開始日
+     * @param endDate 終了日
+     * @return 部門別統計情報
+     */
+    Map<String, Object> getDepartmentAttendanceStatistics(Integer departmentId, LocalDate startDate, LocalDate endDate);
 }

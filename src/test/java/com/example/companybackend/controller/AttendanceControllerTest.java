@@ -1,7 +1,9 @@
 package com.example.companybackend.controller;
 
 import com.example.companybackend.entity.AttendanceRecord;
+import com.example.companybackend.entity.User;
 import com.example.companybackend.service.AttendanceService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,23 +31,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * AttendanceControllerのユニットテストクラス
+ * 考勤控制器测试类
  * 
- * テスト対象: {@link AttendanceController}
+ * 测试目标：
+ * - 测试文件：AttendanceController.java
+ * - 测试类：com.example.companybackend.controller.AttendanceController
+ * - 模拟依赖：AttendanceService（考勤服务类）
  * 
- * テスト範囲:
- * - 出勤打刻 (clock-in)
- * - 退勤打刻 (clock-out)
- * - 勤怠記録取得 (records)
- * - 日次サマリー取得 (daily-summary)
- * 
- * テスト用例制作规范和技巧:
- * 1. 各テストメソッドは1つの機能を検証する
- * 2. 正常系（成功ケース）と異常系（失敗ケース）の両方をテストする
- * 3. モックを使用して外部依存を排除し、テスト対象のコードのみを検証する
- * 4. JSONパスを使用してレスポンスの特定フィールドを検証する
- * 5. メソッド呼び出し回数や引数の検証を行う
- * 6. セキュリティが必要なエンドポイントは@WithMockUserを使用してテストする
+ * 测试规范和技巧：
+ * 1. 使用@WebMvcTest注解仅加载Web层相关组件，提高测试效率
+ * 2. 使用@MockBean模拟服务层依赖，隔离测试
+ * 3. 使用@WithMockUser模拟用户认证信息
+ * 4. 遵循Given-When-Then测试模式
+ * 5. 对每个API端点编写成功和失败场景的测试用例
+ * 6. 验证HTTP状态码、响应结构和关键数据
  */
 @WebMvcTest(AttendanceController.class)
 @ContextConfiguration(classes = {AttendanceController.class, AttendanceControllerTest.TestSecurityConfig.class})
@@ -65,10 +64,11 @@ public class AttendanceControllerTest {
     @MockBean
     private AttendanceService attendanceService;
 
-    /**
-     * テストで使用する勤怠記録のモックデータ
-     */
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private AttendanceRecord testAttendanceRecord;
+    private User testUser;
 
     /**
      * テスト用のセキュリティ設定
@@ -86,42 +86,57 @@ public class AttendanceControllerTest {
     }
 
     /**
-     * 各テストメソッド実行前の初期化処理
-     * テストデータのセットアップを行う
+     * 各测试方法执行前的初始化处理
+     * 设置测试数据
      */
     @BeforeEach
     void setUp() {
+        // 创建测试用的考勤记录
         testAttendanceRecord = new AttendanceRecord();
         testAttendanceRecord.setId(1L);
         testAttendanceRecord.setUserId(1);
         testAttendanceRecord.setType("in");
         testAttendanceRecord.setTimestamp(OffsetDateTime.now());
-        testAttendanceRecord.setLatitude(35.6895);
-        testAttendanceRecord.setLongitude(139.6917);
+        testAttendanceRecord.setLatitude(35.6812);
+        testAttendanceRecord.setLongitude(139.7671);
+
+        // 创建测试用的用户
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("testuser");
+        testUser.setLocationType("office");
+        testUser.setSkipLocationCheck(false);
     }
 
     /**
-     * 出勤打刻のテスト
-     * 正常系：出勤打刻が正しく処理できることを検証する
+     * 测试用例：成功出勤打卡
      * 
-     * テスト対象メソッド: {@link AttendanceController#clockIn}
+     * 测试目标方法：
+     * - AttendanceController.clockIn()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが200(OK)であること
-     * 2. レスポンスのsuccessフィールドがtrueであること
-     * 3. 打刻記録が正しく返されること
-     * 4. AttendanceService.clockInが1回呼び出されていること
+     * 测试场景：
+     * - 员工在有效位置提交出勤打卡请求
+     * - 服务层成功处理并返回打卡记录
+     * 
+     * 预期结果：
+     * - HTTP状态码：200 OK
+     * - 响应包含success=true
+     * - 响应包含成功消息
+     * - 响应数据包含记录ID和打卡类型
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.clockIn()
      */
     @Test
     @WithMockUser
     void testClockIn_Success() throws Exception {
         // モックの設定
         AttendanceService.ClockInRequest request = new AttendanceService.ClockInRequest();
-        request.setLatitude(35.6895);
-        request.setLongitude(139.6917);
+        request.setLatitude(35.6812);
+        request.setLongitude(139.7671);
         
         AttendanceService.ClockInResponse response = new AttendanceService.ClockInResponse(
-            true, "出勤打刻が完了しました", testAttendanceRecord, "勤務中");
+            true, "出勤打刻が完了しました", testAttendanceRecord, "出勤済み");
         
         when(attendanceService.clockIn(any(AttendanceService.ClockInRequest.class), anyLong()))
             .thenReturn(response);
@@ -132,8 +147,8 @@ public class AttendanceControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                        "latitude": 35.6895,
-                        "longitude": 139.6917
+                        "latitude": 35.6812,
+                        "longitude": 139.7671
                     }
                     """))
                 .andExpect(status().isOk())
@@ -146,22 +161,36 @@ public class AttendanceControllerTest {
     }
 
     /**
-     * 出勤打刻のテスト
-     * 異常系：サービスで例外が発生した場合に適切に処理されることを検証する
+     * 测试用例：出勤打卡位置验证失败
      * 
-     * テスト対象メソッド: {@link AttendanceController#clockIn}
+     * 测试目标方法：
+     * - AttendanceController.clockIn()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが500(Internal Server Error)であること
-     * 2. レスポンスのsuccessフィールドがfalseであること
-     * 3. 適切なエラーメッセージが返されること
+     * 测试场景：
+     * - 员工在无效位置提交出勤打卡请求
+     * - 服务层抛出IllegalArgumentException异常
+     * 
+     * 预期结果：
+     * - HTTP状态码：400 Bad Request
+     * - 响应包含success=false
+     * - 响应包含错误消息
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.clockIn()
      */
     @Test
     @WithMockUser
-    void testClockIn_Exception() throws Exception {
-        // モックの設定（例外発生）
+    void testClockIn_InvalidLocation() throws Exception {
+        // モックの設定（位置情報が許可範囲外）
+        AttendanceService.ClockInRequest request = new AttendanceService.ClockInRequest();
+        request.setLatitude(35.0000);  // 許可範囲外の緯度
+        request.setLongitude(139.0000);  // 許可範囲外の経度
+        
+        AttendanceService.ClockInResponse response = new AttendanceService.ClockInResponse(
+            false, "オフィスから100m以上離れた場所での打刻はできません", null, null);
+        
         when(attendanceService.clockIn(any(AttendanceService.ClockInRequest.class), anyLong()))
-            .thenThrow(new RuntimeException("システムエラー"));
+            .thenReturn(response);
 
         // テスト実行と検証
         mockMvc.perform(post("/api/attendance/clock-in")
@@ -169,37 +198,96 @@ public class AttendanceControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                        "latitude": 35.6895,
-                        "longitude": 139.6917
+                        "latitude": 35.0000,
+                        "longitude": 139.0000
                     }
                     """))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("システムエラーが発生しました"));
+                .andExpect(jsonPath("$.message").value("オフィスから100m以上離れた場所での打刻はできません"));
 
         // メソッド呼び出しの検証
         verify(attendanceService, times(1)).clockIn(any(AttendanceService.ClockInRequest.class), anyLong());
     }
 
     /**
-     * 退勤打刻のテスト
-     * 正常系：退勤打刻が正しく処理できることを検証する
+     * 测试用例：跳过位置检查的出勤打卡
      * 
-     * テスト対象メソッド: {@link AttendanceController#clockOut}
+     * 测试目标方法：
+     * - AttendanceController.clockIn()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが200(OK)であること
-     * 2. レスポンスのsuccessフィールドがtrueであること
-     * 3. 打刻記録が正しく返されること
-     * 4. AttendanceService.clockOutが1回呼び出されていること
+     * 测试场景：
+     * - 设置跳过位置检查的用户在任意位置提交出勤打卡请求
+     * - 服务层成功处理并返回打卡记录
+     * 
+     * 预期结果：
+     * - HTTP状态码：200 OK
+     * - 响应包含success=true
+     * - 响应包含成功消息
+     * - 响应数据包含记录ID和打卡类型
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.clockIn()
+     */
+    @Test
+    @WithMockUser
+    void testClockIn_SkipLocationCheck() throws Exception {
+        // モックの設定
+        AttendanceService.ClockInRequest request = new AttendanceService.ClockInRequest();
+        request.setLatitude(35.0000);  // 許可範囲外の緯度
+        request.setLongitude(139.0000);  // 許可範囲外の経度
+        
+        AttendanceService.ClockInResponse response = new AttendanceService.ClockInResponse(
+            true, "出勤打刻が完了しました", testAttendanceRecord, "出勤済み");
+        
+        when(attendanceService.clockIn(any(AttendanceService.ClockInRequest.class), anyLong()))
+            .thenReturn(response);
+
+        // テスト実行と検証
+        mockMvc.perform(post("/api/attendance/clock-in")
+                .header("X-User-Id", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "latitude": 35.0000,
+                        "longitude": 139.0000
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("出勤打刻が完了しました"))
+                .andExpect(jsonPath("$.data.recordId").value(1));
+
+        // メソッド呼び出しの検証
+        verify(attendanceService, times(1)).clockIn(any(AttendanceService.ClockInRequest.class), anyLong());
+    }
+
+    /**
+     * 测试用例：成功退勤打卡
+     * 
+     * 测试目标方法：
+     * - AttendanceController.clockOut()
+     * 
+     * 测试场景：
+     * - 员工在有效位置提交退勤打卡请求
+     * - 服务层成功处理并返回打卡记录
+     * 
+     * 预期结果：
+     * - HTTP状态码：200 OK
+     * - 响应包含success=true
+     * - 响应包含成功消息
+     * - 响应数据包含记录ID和打卡类型
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.clockOut()
      */
     @Test
     @WithMockUser
     void testClockOut_Success() throws Exception {
         // モックの設定
         AttendanceService.ClockOutRequest request = new AttendanceService.ClockOutRequest();
-        request.setLatitude(35.6895);
-        request.setLongitude(139.6917);
+        request.setLatitude(35.6812);
+        request.setLongitude(139.7671);
         
         AttendanceService.ClockOutResponse response = new AttendanceService.ClockOutResponse(
             true, "退勤打刻が完了しました", testAttendanceRecord, "退勤済み");
@@ -213,8 +301,8 @@ public class AttendanceControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                        "latitude": 35.6895,
-                        "longitude": 139.6917
+                        "latitude": 35.6812,
+                        "longitude": 139.7671
                     }
                     """))
                 .andExpect(status().isOk())
@@ -227,22 +315,36 @@ public class AttendanceControllerTest {
     }
 
     /**
-     * 退勤打刻のテスト
-     * 異常系：サービスで例外が発生した場合に適切に処理されることを検証する
+     * 测试用例：退勤打卡位置验证失败
      * 
-     * テスト対象メソッド: {@link AttendanceController#clockOut}
+     * 测试目标方法：
+     * - AttendanceController.clockOut()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが500(Internal Server Error)であること
-     * 2. レスポンスのsuccessフィールドがfalseであること
-     * 3. 適切なエラーメッセージが返されること
+     * 测试场景：
+     * - 员工在无效位置提交退勤打卡请求
+     * - 服务层抛出IllegalArgumentException异常
+     * 
+     * 预期结果：
+     * - HTTP状态码：400 Bad Request
+     * - 响应包含success=false
+     * - 响应包含错误消息
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.clockOut()
      */
     @Test
     @WithMockUser
-    void testClockOut_Exception() throws Exception {
-        // モックの設定（例外発生）
+    void testClockOut_InvalidLocation() throws Exception {
+        // モックの設定（位置情報が許可範囲外）
+        AttendanceService.ClockOutRequest request = new AttendanceService.ClockOutRequest();
+        request.setLatitude(35.0000);  // 許可範囲外の緯度
+        request.setLongitude(139.0000);  // 許可範囲外の経度
+        
+        AttendanceService.ClockOutResponse response = new AttendanceService.ClockOutResponse(
+            false, "オフィスから100m以上離れた場所での打刻はできません", null, null);
+        
         when(attendanceService.clockOut(any(AttendanceService.ClockOutRequest.class), anyLong()))
-            .thenThrow(new RuntimeException("システムエラー"));
+            .thenReturn(response);
 
         // テスト実行と検証
         mockMvc.perform(post("/api/attendance/clock-out")
@@ -250,29 +352,88 @@ public class AttendanceControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                        "latitude": 35.6895,
-                        "longitude": 139.6917
+                        "latitude": 35.0000,
+                        "longitude": 139.0000
                     }
                     """))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("システムエラーが発生しました"));
+                .andExpect(jsonPath("$.message").value("オフィスから100m以上離れた場所での打刻はできません"));
 
         // メソッド呼び出しの検証
         verify(attendanceService, times(1)).clockOut(any(AttendanceService.ClockOutRequest.class), anyLong());
     }
 
     /**
-     * 勤怠記録取得のテスト
-     * 正常系：勤怠記録が正しく取得できることを検証する
+     * 测试用例：跳过位置检查的退勤打卡
      * 
-     * テスト対象メソッド: {@link AttendanceController#getAttendanceRecords}
+     * 测试目标方法：
+     * - AttendanceController.clockOut()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが200(OK)であること
-     * 2. レスポンスにsuccess=trueが含まれること
-     * 3. レスポンスに記録リストが含まれること
-     * 4. AttendanceService.getTodayRecordsが1回呼び出されていること
+     * 测试场景：
+     * - 设置跳过位置检查的用户在任意位置提交退勤打卡请求
+     * - 服务层成功处理并返回打卡记录
+     * 
+     * 预期结果：
+     * - HTTP状态码：200 OK
+     * - 响应包含success=true
+     * - 响应包含成功消息
+     * - 响应数据包含记录ID和打卡类型
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.clockOut()
+     */
+    @Test
+    @WithMockUser
+    void testClockOut_SkipLocationCheck() throws Exception {
+        // モックの設定
+        AttendanceService.ClockOutRequest request = new AttendanceService.ClockOutRequest();
+        request.setLatitude(35.0000);  // 許可範囲外の緯度
+        request.setLongitude(139.0000);  // 許可範囲外の経度
+        
+        AttendanceService.ClockOutResponse response = new AttendanceService.ClockOutResponse(
+            true, "退勤打刻が完了しました", testAttendanceRecord, "退勤済み");
+        
+        when(attendanceService.clockOut(any(AttendanceService.ClockOutRequest.class), anyLong()))
+            .thenReturn(response);
+
+        // テスト実行と検証
+        mockMvc.perform(post("/api/attendance/clock-out")
+                .header("X-User-Id", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "latitude": 35.0000,
+                        "longitude": 139.0000
+                    }
+                    """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("退勤打刻が完了しました"))
+                .andExpect(jsonPath("$.data.recordId").value(1));
+
+        // メソッド呼び出しの検証
+        verify(attendanceService, times(1)).clockOut(any(AttendanceService.ClockOutRequest.class), anyLong());
+    }
+
+    /**
+     * 测试用例：成功获取考勤记录
+     * 
+     * 测试目标方法：
+     * - AttendanceController.getAttendanceRecords()
+     * 
+     * 测试场景：
+     * - 员工查询考勤记录
+     * - 服务层返回考勤记录列表
+     * 
+     * 预期结果：
+     * - HTTP状态码：200 OK
+     * - 响应包含success=true
+     * - 响应数据包含考勤记录列表
+     * - 列表中包含示例考勤记录的ID和类型
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.getTodayRecords()
      */
     @Test
     @WithMockUser
@@ -294,13 +455,21 @@ public class AttendanceControllerTest {
     }
 
     /**
-     * 勤怠記録取得のテスト
-     * 異常系：サービスで例外が発生した場合に適切に処理されることを検証する
+     * 测试用例：获取考勤记录时服务异常
      * 
-     * テスト対象メソッド: {@link AttendanceController#getAttendanceRecords}
+     * 测试目标方法：
+     * - AttendanceController.getAttendanceRecords()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが500(Internal Server Error)であること
+     * 测试场景：
+     * - 员工查询考勤记录
+     * - 服务层抛出RuntimeException异常
+     * 
+     * 预期结果：
+     * - HTTP状态码：500 Internal Server Error
+     * - 响应包含success=false
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.getTodayRecords()
      */
     @Test
     @WithMockUser
@@ -320,14 +489,22 @@ public class AttendanceControllerTest {
     }
 
     /**
-     * 日次サマリー取得のテスト
-     * 正常系：日次サマリーが正しく取得できることを検証する
+     * 测试用例：成功获取日次汇总
      * 
-     * テスト対象メソッド: {@link AttendanceController#getDailySummary}
+     * 测试目标方法：
+     * - AttendanceController.getDailySummary()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが200(OK)であること
-     * 2. AttendanceService.getDailySummaryが1回呼び出されていること
+     * 测试场景：
+     * - 员工查询指定日期的日次汇总
+     * - 服务层返回日次汇总数据
+     * 
+     * 预期结果：
+     * - HTTP状态码：200 OK
+     * - 响应包含success=true
+     * - 响应数据包含工作状态和工时
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.getDailySummary()
      */
     @Test
     @WithMockUser
@@ -347,8 +524,8 @@ public class AttendanceControllerTest {
         
         AttendanceService.DailySummaryData summary = new AttendanceService.DailySummaryData(
             LocalDate.now(), 
-            new BigDecimal("8.00"), 
-            new BigDecimal("0.00"), 
+            BigDecimal.valueOf(8.00), 
+            BigDecimal.valueOf(0.00), 
             "completed", 
             clockInRecord, 
             clockOutRecord);
@@ -369,13 +546,21 @@ public class AttendanceControllerTest {
     }
 
     /**
-     * 日次サマリー取得のテスト
-     * 異常系：サービスで例外が発生した場合に適切に処理されることを検証する
+     * 测试用例：获取日次汇总时服务异常
      * 
-     * テスト対象メソッド: {@link AttendanceController#getDailySummary}
+     * 测试目标方法：
+     * - AttendanceController.getDailySummary()
      * 
-     * 検証内容:
-     * 1. HTTPステータスコードが500(Internal Server Error)であること
+     * 测试场景：
+     * - 员工查询指定日期的日次汇总
+     * - 服务层抛出RuntimeException异常
+     * 
+     * 预期结果：
+     * - HTTP状态码：500 Internal Server Error
+     * - 响应包含success=false
+     * 
+     * 模拟的依赖方法：
+     * - AttendanceService.getDailySummary()
      */
     @Test
     @WithMockUser

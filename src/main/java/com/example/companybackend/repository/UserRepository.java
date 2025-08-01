@@ -33,6 +33,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     Page<User> findByDepartmentId(Integer departmentId, Pageable pageable);
     
+    // 添加不带分页的findByDepartmentId方法
+    List<User> findByDepartmentId(Integer departmentId);
+    
     Page<User> findByRole(String role, Pageable pageable);
     
     // 添加不带Pageable的findByRole方法

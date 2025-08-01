@@ -3,9 +3,11 @@ package com.example.companybackend.service;
 import com.example.companybackend.entity.AttendanceRecord;
 import com.example.companybackend.entity.AttendanceSummary;
 import com.example.companybackend.entity.User;
+import com.example.companybackend.entity.WorkLocation;
 import com.example.companybackend.repository.AttendanceRecordRepository;
 import com.example.companybackend.repository.AttendanceSummaryRepository;
 import com.example.companybackend.repository.UserRepository;
+import com.example.companybackend.repository.WorkLocationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,15 +29,14 @@ import java.util.Optional;
  * - Database First原則
  * - 単純なエンティティ設計
  * 
- * 機能:
- * - 出勤/退勤打刻
- * - 位置情報検証（客先勤務者500m制限）
- * - 重複打刻防止
- * - 勤怠状況確認
- * - 勤怠統計情報
+ * ビジネスルール:
+ * - 打刻位置検証 (50m以内)
+ * - 連続打刻防止 (1分以上間隔)
+ * - 休憩時間自動計算 (6時間以上で1時間)
+ * - 深夜時間自動計算 (22:00-05:00)
+ * - 休日自動判定 (holidaysテーブル参照)
  */
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class AttendanceService {
@@ -43,6 +44,7 @@ public class AttendanceService {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceSummaryRepository attendanceSummaryRepository;
     private final UserRepository userRepository;
+    private final WorkLocationRepository workLocationRepository;
 
     /**
      * 出勤打刻
@@ -204,7 +206,8 @@ public class AttendanceService {
 
     /**
      * 位置情報検証
-     * 客先勤務者は500m以内制限
+     * オフィス勤務者は100m以内、客先勤務者は500m以内制限
+     * skip_location_checkがtrueの場合は検証をスキップ
      * @param user ユーザー
      * @param latitude 緯度
      * @param longitude 経度
@@ -220,12 +223,57 @@ public class AttendanceService {
             throw new IllegalArgumentException("位置情報が無効です");
         }
 
-        // 客先勤務者の場合、500m以内制限チェック
-        if ("client".equals(user.getLocationType())) {
-            // TODO: 実際の客先位置座標と比較して500m以内かチェック
-            // 現在は基本的な検証のみ実装
-            log.info("客先勤務者の位置検証: userId={}, location={},{}", user.getId(), latitude, longitude);
+        // 位置チェック不要の場合は検証をスキップ
+        if (user.getSkipLocationCheck() != null && user.getSkipLocationCheck()) {
+            log.info("位置チェックをスキップ: userId={}", user.getId());
+            return;
         }
+
+        // オフィス勤務者の場合、オフィス座標との距離検証（100m以内）
+        if ("office".equals(user.getLocationType())) {
+            List<WorkLocation> officeLocations = workLocationRepository.findByType("office");
+            boolean valid = officeLocations.stream().anyMatch(location -> 
+                calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude()) <= location.getRadius()
+            );
+            if (!valid) {
+                throw new IllegalArgumentException("オフィスから100m以上離れた場所での打刻はできません");
+            }
+        } 
+        // 客先勤務者の場合、個別設定された緯度経度と照合
+        else if ("client".equals(user.getLocationType())) {
+            List<WorkLocation> clientLocations = workLocationRepository.findByType("client");
+            boolean valid = clientLocations.stream().anyMatch(location -> 
+                calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude()) <= location.getRadius()
+            );
+            if (!valid) {
+                throw new IllegalArgumentException("指定された客先から500m以上離れた場所での打刻はできません");
+            }
+        }
+    }
+
+    /**
+     * ハバーサイン公式による距離計算
+     * @param lat1 緯度1
+     * @param lon1 経度1
+     * @param lat2 緯度2
+     * @param lon2 経度2
+     * @return 距離（メートル）
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371000; // 地球の半径（メートル）
+        
+        double lat1Rad = Math.toRadians(lat1);
+        double lat2Rad = Math.toRadians(lat2);
+        double deltaLatRad = Math.toRadians(lat2 - lat1);
+        double deltaLonRad = Math.toRadians(lon2 - lon1);
+        
+        double a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
+                   Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                   Math.sin(deltaLonRad / 2) * Math.sin(deltaLonRad / 2);
+        
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        return R * c;
     }
 
     /**

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import java.util.Map;
  * - GET /api/v1/batch/steps/{jobExecutionId} - ステップ実行履歴取得
  * - GET /api/v1/batch/statistics - バッチ実行統計取得
  * - GET /api/v1/batch/running - 実行中ジョブ取得
+ * - GET /api/v1/batch/job-names - ジョブ名一覧取得
+ * - GET /api/v1/batch/latest/{jobName} - 特定ジョブの最新実行情報取得
  */
 @RestController
 @RequestMapping("/api/v1/batch")

@@ -18,7 +18,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
   "data": { /* レスポンスデータ */ }
 }
 
-// エラーレスポンス
+// エラーレポート
 {
   "success": false,
   "message": "エラーメッセージ",
@@ -675,6 +675,296 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 
 ---
 
+## 🔄 バッチ管理API
+
+### GET /api/v1/batch/instances
+
+**全ジョブインスタンス取得**
+
+```json
+// Response
+{
+  "success": true,
+  "totalCount": 2,
+  "instances": [
+    {
+      "jobInstanceId": 1,
+      "jobName": "monthlyAttendanceSummaryJob"
+    },
+    {
+      "jobInstanceId": 2,
+      "jobName": "dailyAttendanceSummaryJob"
+    }
+  ]
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "ジョブインスタンス取得に失敗しました: Database connection error"
+}
+```
+
+### GET /api/v1/batch/executions/{jobName}
+
+**ジョブ実行履歴取得**
+
+```json
+// Request Parameters
+// - jobName (path parameter)
+// - page (optional query parameter, default: 0)
+// - size (optional query parameter, default: 20)
+
+// Response
+{
+  "success": true,
+  "jobName": "monthlyAttendanceSummaryJob",
+  "page": 0,
+  "size": 20,
+  "totalCount": 1,
+  "executions": [
+    {
+      "jobExecutionId": 1,
+      "jobInstanceId": 1,
+      "startTime": "2025-01-01T02:00:00+09:00",
+      "endTime": "2025-01-01T02:00:45+09:00",
+      "status": "COMPLETED",
+      "exitCode": "COMPLETED"
+    }
+  ]
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "ジョブ実行履歴取得に失敗しました: Job not found"
+}
+```
+
+### GET /api/v1/batch/steps/{jobExecutionId}
+
+**ステップ実行履歴取得**
+
+```json
+// Request Parameters
+// - jobExecutionId (path parameter)
+
+// Response
+{
+  "success": true,
+  "jobExecutionId": 1,
+  "totalCount": 2,
+  "steps": [
+    {
+      "stepExecutionId": 1,
+      "stepName": "processUsersStep",
+      "startTime": "2025-01-01T02:00:00+09:00",
+      "endTime": "2025-01-01T02:00:30+09:00",
+      "status": "COMPLETED",
+      "commitCount": 5,
+      "readCount": 50,
+      "writeCount": 50,
+      "exitCode": "COMPLETED"
+    },
+    {
+      "stepExecutionId": 2,
+      "stepName": "generateReportStep",
+      "startTime": "2025-01-01T02:00:30+09:00",
+      "endTime": "2025-01-01T02:00:45+09:00",
+      "status": "COMPLETED",
+      "commitCount": 1,
+      "readCount": 1,
+      "writeCount": 1,
+      "exitCode": "COMPLETED"
+    }
+  ]
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "ステップ実行履歴取得に失敗しました: Execution not found"
+}
+```
+
+### GET /api/v1/batch/statistics
+
+**バッチ実行統計取得**
+
+```json
+// Response
+{
+  "success": true,
+  "statistics": {
+    "totalJobs": 5,
+    "successRate": 100.0,
+    "errorRate": 0.0
+  }
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "バッチ統計取得に失敗しました: Service unavailable"
+}
+```
+
+### GET /api/v1/batch/running
+
+**実行中ジョブ取得**
+
+```json
+// Response
+{
+  "success": true,
+  "totalCount": 1,
+  "runningJobs": [
+    {
+      "jobExecutionId": 3,
+      "jobName": "dataCleanupJob",
+      "status": "STARTED"
+    }
+  ]
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "実行中ジョブ取得に失敗しました: Service error"
+}
+```
+
+### GET /api/v1/batch/job-names
+
+**ジョブ名一覧取得**
+
+```json
+// Response
+{
+  "success": true,
+  "totalCount": 5,
+  "jobNames": [
+    "dailyAttendanceSummaryJob",
+    "monthlyAttendanceSummaryJob",
+    "paidLeaveUpdateJob",
+    "dataCleanupJob",
+    "dataRepairJob"
+  ]
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "ジョブ名一覧取得に失敗しました: Database error"
+}
+```
+
+### GET /api/v1/batch/latest/{jobName}
+
+**特定ジョブの最新実行情報取得**
+
+```json
+// Request Parameters
+// - jobName (path parameter)
+
+// Response
+{
+  "success": true,
+  "jobName": "monthlyAttendanceSummaryJob",
+  "latestExecution": {
+    "jobExecutionId": 1,
+    "jobName": "monthlyAttendanceSummaryJob",
+    "status": "COMPLETED"
+  }
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "最新ジョブ実行情報取得に失敗しました: Job not found"
+}
+```
+
+## 👤 ユーザー関連 API
+
+### GET /api/users/profile
+
+```json
+// Response
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "employeeCode": "E12345",
+    "name": "田中太郎",
+    "email": "tanaka@company.com",
+    "role": "EMPLOYEE",
+    "department": "開発部",
+    "position": "エンジニア",
+    "hireDate": "2023-04-01",
+    "phoneNumber": "090-1234-5678",
+    "remainingPaidLeave": 20
+  }
+}
+```
+
+### PUT /api/users/profile
+
+```json
+// Request
+{
+  "name": "田中太郎",
+  "email": "tanaka@company.com",
+  "phoneNumber": "090-1234-5678",
+  "emergencyContact": "090-9876-5432"
+}
+
+// Response
+{
+  "success": true,
+  "message": "プロフィールを更新しました",
+  "data": {
+    "id": 1,
+    "name": "田中太郎",
+    "email": "tanaka@company.com",
+    "phoneNumber": "090-1234-5678",
+    "updatedAt": "2025-01-18T10:30:00+09:00"
+  }
+}
+```
+
+### GET /api/users/list (ADMIN only)
+
+```json
+// Request Parameters
+// ?page=0&size=10&department=開発部&active=true
+
+// Response
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "employeeCode": "E12345",
+        "name": "田中太郎",
+        "email": "tanaka@company.com",
+        "role": "EMPLOYEE",
+        "department": "開発部",
+        "position": "エンジニア",
+        "isActive": true,
+        "hireDate": "2023-04-01"
+      }
+    ],
+    "totalCount": 50,
+    "currentPage": 0,
+    "totalPages": 5
+  }
+}
+```
+
+---
+
 ## 📊 API 権限マトリクス
 
 | API カテゴリ   | エンドポイント                | ADMIN | MANAGER | EMPLOYEE |
@@ -690,6 +980,7 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 | ユーザー管理   | `/api/users/list`             | ✅    | ❌      | ❌       |
 | **バッチ処理** | `/api/batch/status`           | ✅    | ✅      | ❌       |
 | **バッチ処理** | `/api/batch/*`                | ✅    | ❌      | ❌       |
+| **バッチ管理** | `/api/v1/batch/*`             | ✅    | ✅      | ❌       |
 
 ---
 
@@ -715,7 +1006,7 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 
 ### バッチ処理の実行例（管理者）
 
-```bash
+```
 # 1. ログイン
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
@@ -740,7 +1031,7 @@ curl -X POST http://localhost:8080/api/batch/cleanup-data \
 
 ### レポート出力例
 
-```bash
+```
 # 月次勤怠レポートのダウンロード
 curl -X GET "http://localhost:8080/api/reports/attendance/monthly?year=2025&month=1" \
   -H "Authorization: Bearer YOUR_TOKEN" \

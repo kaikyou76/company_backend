@@ -1,9 +1,11 @@
 package com.example.companybackend.service.impl;
 
 import com.example.companybackend.entity.AttendanceSummary;
+import com.example.companybackend.entity.User;
 import com.example.companybackend.repository.AttendanceSummaryRepository;
 import com.example.companybackend.repository.AttendanceRecordRepository;
 import com.example.companybackend.repository.HolidayRepository;
+import com.example.companybackend.repository.UserRepository;
 import com.example.companybackend.service.AttendanceSummaryService;
 
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class AttendanceSummaryServiceImpl implements AttendanceSummaryService {
     private final AttendanceSummaryRepository attendanceSummaryRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final HolidayRepository holidayRepository;
+    private final UserRepository userRepository;
 
     @Override
     public Page<AttendanceSummary> getDailySummaries(LocalDate startDate, LocalDate endDate, Pageable pageable) {
@@ -144,6 +147,89 @@ public class AttendanceSummaryServiceImpl implements AttendanceSummaryService {
                 .average()
                 .orElse(0.0));
                 
+        return statistics;
+    }
+    
+    @Override
+    public Map<String, Object> getPersonalAttendanceStatistics(Long userId, LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // ユーザーの勤怠サマリーを取得
+        List<AttendanceSummary> summaries = attendanceSummaryRepository.findByUserIdAndTargetDateBetween(
+                userId.intValue(), startDate, endDate);
+        
+        // 統計情報を計算
+        double totalHours = summaries.stream()
+                .mapToDouble(summary -> summary.getTotalHours() != null ? summary.getTotalHours().doubleValue() : 0.0)
+                .sum();
+                
+        double overtimeHours = summaries.stream()
+                .mapToDouble(summary -> summary.getOvertimeHours() != null ? summary.getOvertimeHours().doubleValue() : 0.0)
+                .sum();
+                
+        double lateNightHours = summaries.stream()
+                .mapToDouble(summary -> summary.getLateNightHours() != null ? summary.getLateNightHours().doubleValue() : 0.0)
+                .sum();
+                
+        double holidayHours = summaries.stream()
+                .mapToDouble(summary -> summary.getHolidayHours() != null ? summary.getHolidayHours().doubleValue() : 0.0)
+                .sum();
+        
+        statistics.put("userId", userId);
+        statistics.put("totalRecords", summaries.size());
+        statistics.put("totalHours", totalHours);
+        statistics.put("overtimeHours", overtimeHours);
+        statistics.put("lateNightHours", lateNightHours);
+        statistics.put("holidayHours", holidayHours);
+        statistics.put("startDate", startDate);
+        statistics.put("endDate", endDate);
+        
+        return statistics;
+    }
+    
+    @Override
+    public Map<String, Object> getDepartmentAttendanceStatistics(Integer departmentId, LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 部門に所属するユーザーを取得
+        List<User> departmentUsers = userRepository.findByDepartmentId(departmentId);
+        List<Integer> userIds = departmentUsers.stream()
+                .map(user -> Math.toIntExact(user.getId()))
+                .collect(Collectors.toList());
+        
+        // 部門ユーザーの勤怠サマリーを取得
+        List<AttendanceSummary> departmentSummaries = userIds.stream()
+                .flatMap(userId -> attendanceSummaryRepository.findByUserIdAndTargetDateBetween(userId, startDate, endDate).stream())
+                .collect(Collectors.toList());
+        
+        // 統計情報を計算
+        double totalHours = departmentSummaries.stream()
+                .mapToDouble(summary -> summary.getTotalHours() != null ? summary.getTotalHours().doubleValue() : 0.0)
+                .sum();
+                
+        double overtimeHours = departmentSummaries.stream()
+                .mapToDouble(summary -> summary.getOvertimeHours() != null ? summary.getOvertimeHours().doubleValue() : 0.0)
+                .sum();
+                
+        double lateNightHours = departmentSummaries.stream()
+                .mapToDouble(summary -> summary.getLateNightHours() != null ? summary.getLateNightHours().doubleValue() : 0.0)
+                .sum();
+                
+        double holidayHours = departmentSummaries.stream()
+                .mapToDouble(summary -> summary.getHolidayHours() != null ? summary.getHolidayHours().doubleValue() : 0.0)
+                .sum();
+        
+        statistics.put("departmentId", departmentId);
+        statistics.put("userCount", departmentUsers.size());
+        statistics.put("totalRecords", departmentSummaries.size());
+        statistics.put("totalHours", totalHours);
+        statistics.put("averageHoursPerUser", departmentUsers.size() > 0 ? totalHours / departmentUsers.size() : 0);
+        statistics.put("overtimeHours", overtimeHours);
+        statistics.put("lateNightHours", lateNightHours);
+        statistics.put("holidayHours", holidayHours);
+        statistics.put("startDate", startDate);
+        statistics.put("endDate", endDate);
+        
         return statistics;
     }
 }

@@ -29,6 +29,8 @@ import java.io.PrintWriter;
  * - GET /api/reports/attendance/overtime
  * - GET /api/reports/attendance/statistics
  * - GET /api/reports/attendance/export
+ * - GET /api/reports/attendance/personal
+ * - GET /api/reports/attendance/department
  */
 @RestController
 @RequestMapping("/api/reports/attendance")
@@ -131,6 +133,7 @@ public class AttendanceSummaryController {
             
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
+            result.put("message", "残業時間統計の取得が完了しました");
             
             Map<String, Object> data = new HashMap<>();
             data.put("statistics", statistics);
@@ -139,7 +142,7 @@ public class AttendanceSummaryController {
             
             result.put("data", data);
             
-            log.debug("残業時間統計取得API成功");
+            log.debug("残業時間統計取得API成功: totalRecords={}", statistics.get("totalRecords"));
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
@@ -167,6 +170,7 @@ public class AttendanceSummaryController {
             
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
+            result.put("message", "勤務統計レポートの取得が完了しました");
             
             Map<String, Object> data = new HashMap<>();
             data.put("statistics", statistics);
@@ -175,7 +179,7 @@ public class AttendanceSummaryController {
             
             result.put("data", data);
             
-            log.debug("勤務統計レポート取得API成功");
+            log.debug("勤務統計レポート取得API成功: totalRecords={}", statistics.get("totalRecords"));
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
@@ -192,7 +196,7 @@ public class AttendanceSummaryController {
      * GET /api/reports/attendance/export
      */
     @GetMapping("/export")
-    public void exportAttendanceData(
+    public void exportSummaries(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "csv") String format,
@@ -200,39 +204,100 @@ public class AttendanceSummaryController {
         
         log.debug("勤務時間データエクスポートAPI呼び出し: startDate={}, endDate={}, format={}", startDate, endDate, format);
         
-        try {
-            response.setCharacterEncoding("UTF-8");
-            if ("json".equalsIgnoreCase(format)) {
-                response.setContentType("application/json;charset=UTF-8");
-                response.setHeader("Content-Disposition", 
-                    String.format("attachment; filename=\"attendance_data_%s_%s.json\"", startDate, endDate));
-            } else {
-                response.setContentType("text/csv;charset=UTF-8");
-                response.setHeader("Content-Disposition", 
-                    String.format("attachment; filename=\"attendance_data_%s_%s.csv\"", startDate, endDate));
-            }
-            
-            PrintWriter writer = response.getWriter();
-            try {
-                if ("json".equalsIgnoreCase(format)) {
-                    attendanceSummaryService.exportSummariesToJSON(
-                        attendanceSummaryService.getSummariesForExport(startDate, endDate), writer);
-                } else {
-                    attendanceSummaryService.exportSummariesToCSV(
-                        attendanceSummaryService.getSummariesForExport(startDate, endDate), writer);
-                }
-                
-                log.debug("勤務時間データエクスポートAPI成功");
-            } finally {
-                writer.flush();
-            }
-        } catch (Exception e) {
-            log.error("勤務時間データエクスポートAPI例外: startDate={}, endDate={}, format={}", startDate, endDate, format, e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        response.setCharacterEncoding("UTF-8");
+        if ("json".equalsIgnoreCase(format)) {
             response.setContentType("application/json;charset=UTF-8");
-            PrintWriter writer = response.getWriter();
-            writer.write("{\"success\": false, \"message\": \"勤務時間データのエクスポートに失敗しました\"}");
+            response.setHeader("Content-Disposition", "attachment; filename=\"attendance_summaries.json\"");
+        } else {
+            response.setContentType("text/csv;charset=UTF-8");
+            response.setHeader("Content-Disposition", "attachment; filename=\"attendance_summaries.csv\"");
+        }
+        
+        PrintWriter writer = response.getWriter();
+        try {
+            if ("json".equalsIgnoreCase(format)) {
+                attendanceSummaryService.exportSummariesToJSON(
+                    attendanceSummaryService.getSummariesForExport(startDate, endDate), writer);
+            } else {
+                attendanceSummaryService.exportSummariesToCSV(
+                    attendanceSummaryService.getSummariesForExport(startDate, endDate), writer);
+            }
+        } finally {
             writer.flush();
+        }
+        
+        log.debug("勤務時間データエクスポートAPI成功");
+    }
+
+    /**
+     * 個人別勤怠統計取得 API
+     * GET /api/reports/attendance/personal
+     */
+    @GetMapping("/personal")
+    public ResponseEntity<Map<String, Object>> getPersonalAttendanceStatistics(
+            @RequestParam Long userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        log.debug("個人別勤怠統計取得API呼び出し: userId={}, startDate={}, endDate={}", userId, startDate, endDate);
+        
+        try {
+            Map<String, Object> statistics = attendanceSummaryService.getPersonalAttendanceStatistics(userId, startDate, endDate);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "個人別勤怠統計の取得が完了しました");
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("statistics", statistics);
+            
+            result.put("data", data);
+            
+            log.debug("個人別勤怠統計取得API成功: userId={}, totalRecords={}", userId, statistics.get("totalRecords"));
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("個人別勤怠統計取得API例外: userId={}, startDate={}, endDate={}", userId, startDate, endDate, e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "個人別勤怠統計の取得に失敗しました");
+            return ResponseEntity.internalServerError().body(errorResult);
+        }
+    }
+
+    /**
+     * 部門別勤怠統計取得 API
+     * GET /api/reports/attendance/department
+     */
+    @GetMapping("/department")
+    public ResponseEntity<Map<String, Object>> getDepartmentAttendanceStatistics(
+            @RequestParam Integer departmentId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        log.debug("部門別勤怠統計取得API呼び出し: departmentId={}, startDate={}, endDate={}", departmentId, startDate, endDate);
+        
+        try {
+            Map<String, Object> statistics = attendanceSummaryService.getDepartmentAttendanceStatistics(departmentId, startDate, endDate);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "部門別勤怠統計の取得が完了しました");
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("statistics", statistics);
+            
+            result.put("data", data);
+            
+            log.debug("部門別勤怠統計取得API成功: departmentId={}, totalRecords={}", departmentId, statistics.get("totalRecords"));
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("部門別勤怠統計取得API例外: departmentId={}, startDate={}, endDate={}", departmentId, startDate, endDate, e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "部門別勤怠統計の取得に失敗しました");
+            return ResponseEntity.internalServerError().body(errorResult);
         }
     }
 
