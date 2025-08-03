@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * バッチ管理コントローラー
- * 既存Spring Batchテーブル（comsys_dump.sql）完全活用
  * 
  * エンドポイント：
  * - GET /api/v1/batch/instances - 全ジョブインスタンス取得
@@ -34,7 +33,7 @@ public class BatchManagementController {
 
     /**
      * 全ジョブインスタンス取得
-     * batch_job_instanceテーブル活用
+     * 全ジョブインスタンス取得
      */
     @GetMapping("/instances")
     public ResponseEntity<Map<String, Object>> getJobInstances() {
@@ -60,7 +59,7 @@ public class BatchManagementController {
 
     /**
      * ジョブ実行履歴取得
-     * batch_job_executionテーブル活用
+     * ジョブ実行履歴取得
      */
     @GetMapping("/executions/{jobName}")
     public ResponseEntity<Map<String, Object>> getJobExecutionHistory(
@@ -93,7 +92,7 @@ public class BatchManagementController {
 
     /**
      * ステップ実行履歴取得
-     * batch_step_executionテーブル活用
+     * ステップ実行履歴取得
      */
     @GetMapping("/steps/{jobExecutionId}")
     public ResponseEntity<Map<String, Object>> getStepExecutionHistory(

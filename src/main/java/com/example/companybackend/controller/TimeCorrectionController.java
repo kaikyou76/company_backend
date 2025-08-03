@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 打刻修正申請コントローラー
@@ -41,26 +43,32 @@ public class TimeCorrectionController {
      * POST /api/v1/time-corrections
      */
     @PostMapping
-    public ResponseEntity<CreateTimeCorrectionResponse> createTimeCorrection(
+    public ResponseEntity<Map<String, Object>> createTimeCorrection(
             @Valid @RequestBody CreateTimeCorrectionRequest request,
             @RequestHeader("X-User-Id") Long userId) {
         log.info("打刻修正申請作成リクエスト受信: requestType={}", request.getRequestType());
         
+        Map<String, Object> response = new HashMap<>();
         try {
-            CreateTimeCorrectionResponse response = timeCorrectionService.createTimeCorrection(request, userId);
+            CreateTimeCorrectionResponse serviceResponse = timeCorrectionService.createTimeCorrection(request, userId);
             
-            if (response.isSuccess()) {
-                log.info("打刻修正申請作成成功: correctionId={}", response.getTimeCorrection().getId());
+            if (serviceResponse.isSuccess()) {
+                log.info("打刻修正申請作成成功: correctionId={}", serviceResponse.getTimeCorrection().getId());
+                response.put("success", true);
+                response.put("message", "打刻修正申請が正常に作成されました");
+                response.put("data", serviceResponse.getTimeCorrection());
                 return ResponseEntity.ok(response);
             } else {
-                log.warn("打刻修正申請作成失敗: reason={}", response.getMessage());
+                log.warn("打刻修正申請作成失敗: reason={}", serviceResponse.getMessage());
+                response.put("success", false);
+                response.put("message", serviceResponse.getMessage());
                 return ResponseEntity.badRequest().body(response);
             }
         } catch (Exception e) {
             log.error("打刻修正申請作成中にエラーが発生: error={}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                CreateTimeCorrectionResponse.error("打刻修正申請の作成中にエラーが発生しました")
-            );
+            response.put("success", false);
+            response.put("message", "打刻修正申請の作成中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -69,28 +77,36 @@ public class TimeCorrectionController {
      * PUT /api/v1/time-corrections/{id}/approve
      */
     @PutMapping("/{id}/approve")
-    public ResponseEntity<ApproveTimeCorrectionResponse> approveTimeCorrection(
+    public ResponseEntity<Map<String, Object>> approveTimeCorrection(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long approverId) {
         
         log.info("打刻修正申請承認API呼び出し: correctionId={}, approverId={}", id, approverId);
         
+        Map<String, Object> response = new HashMap<>();
         try {
-            ApproveTimeCorrectionResponse response = 
+            ApproveTimeCorrectionResponse serviceResponse = 
                     timeCorrectionService.approveTimeCorrection(id, approverId);
             
-            if (response.isSuccess()) {
+            if (serviceResponse.isSuccess()) {
                 log.info("打刻修正申請承認API成功: correctionId={}, approverId={}", id, approverId);
+                response.put("success", true);
+                response.put("message", "打刻修正申請が承認されました");
+                response.put("data", serviceResponse.getCorrection());
                 return ResponseEntity.ok(response);
             } else {
                 log.warn("打刻修正申請承認API失敗: correctionId={}, approverId={}, error={}", 
-                        id, approverId, response.getMessage());
+                        id, approverId, serviceResponse.getMessage());
+                response.put("success", false);
+                response.put("message", serviceResponse.getMessage());
                 return ResponseEntity.badRequest().body(response);
             }
             
         } catch (Exception e) {
             log.error("打刻修正申請承認API例外: correctionId={}, approverId={}", id, approverId, e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "打刻修正申請の承認中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -99,28 +115,36 @@ public class TimeCorrectionController {
      * PUT /api/v1/time-corrections/{id}/reject
      */
     @PutMapping("/{id}/reject")
-    public ResponseEntity<RejectTimeCorrectionResponse> rejectTimeCorrection(
+    public ResponseEntity<Map<String, Object>> rejectTimeCorrection(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long approverId) {
         
         log.info("打刻修正申請拒否API呼び出し: correctionId={}, approverId={}", id, approverId);
         
+        Map<String, Object> response = new HashMap<>();
         try {
-            RejectTimeCorrectionResponse response = 
+            RejectTimeCorrectionResponse serviceResponse = 
                     timeCorrectionService.rejectTimeCorrection(id, approverId);
             
-            if (response.isSuccess()) {
+            if (serviceResponse.isSuccess()) {
                 log.info("打刻修正申請拒否API成功: correctionId={}, approverId={}", id, approverId);
+                response.put("success", true);
+                response.put("message", "打刻修正申請が拒否されました");
+                response.put("data", serviceResponse.getCorrection());
                 return ResponseEntity.ok(response);
             } else {
                 log.warn("打刻修正申請拒否API失敗: correctionId={}, approverId={}, error={}", 
-                        id, approverId, response.getMessage());
+                        id, approverId, serviceResponse.getMessage());
+                response.put("success", false);
+                response.put("message", serviceResponse.getMessage());
                 return ResponseEntity.badRequest().body(response);
             }
             
         } catch (Exception e) {
             log.error("打刻修正申請拒否API例外: correctionId={}, approverId={}", id, approverId, e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "打刻修正申請の拒否中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -129,25 +153,31 @@ public class TimeCorrectionController {
      * GET /api/v1/time-corrections/user
      */
     @GetMapping("/user")
-    public ResponseEntity<UserTimeCorrectionListResponse> getUserTimeCorrections(
+    public ResponseEntity<Map<String, Object>> getUserTimeCorrections(
             @RequestHeader("X-User-Id") Long userId) {
         
         log.debug("ユーザー打刻修正申請一覧API呼び出し: userId={}", userId);
         
+        Map<String, Object> response = new HashMap<>();
         try {
             List<TimeCorrection> corrections = timeCorrectionService.getUserTimeCorrections(userId);
             
-            UserTimeCorrectionListResponse response = new UserTimeCorrectionListResponse();
-            response.setUserId(userId);
-            response.setCorrections(corrections);
-            response.setTotalCount(corrections.size());
+            response.put("success", true);
+            response.put("message", "ユーザーの打刻修正申請一覧を取得しました");
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", userId);
+            data.put("corrections", corrections);
+            data.put("totalCount", corrections.size());
+            response.put("data", data);
             
             log.debug("ユーザー打刻修正申請一覧API成功: userId={}, count={}", userId, corrections.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("ユーザー打刻修正申請一覧API例外: userId={}", userId, e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "ユーザーの打刻修正申請一覧取得中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -156,23 +186,29 @@ public class TimeCorrectionController {
      * GET /api/v1/time-corrections/pending
      */
     @GetMapping("/pending")
-    public ResponseEntity<PendingTimeCorrectionListResponse> getPendingTimeCorrections() {
+    public ResponseEntity<Map<String, Object>> getPendingTimeCorrections() {
         
         log.debug("承認待ち申請一覧API呼び出し");
         
+        Map<String, Object> response = new HashMap<>();
         try {
             List<TimeCorrection> corrections = timeCorrectionService.getPendingTimeCorrections();
             
-            PendingTimeCorrectionListResponse response = new PendingTimeCorrectionListResponse();
-            response.setCorrections(corrections);
-            response.setTotalCount(corrections.size());
+            response.put("success", true);
+            response.put("message", "承認待ち申請一覧を取得しました");
+            Map<String, Object> data = new HashMap<>();
+            data.put("corrections", corrections);
+            data.put("totalCount", corrections.size());
+            response.put("data", data);
             
             log.debug("承認待ち申請一覧API成功: count={}", corrections.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("承認待ち申請一覧API例外", e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "承認待ち申請一覧取得中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -181,24 +217,32 @@ public class TimeCorrectionController {
      * GET /api/v1/time-corrections/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<TimeCorrection> getTimeCorrectionById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getTimeCorrectionById(@PathVariable Long id) {
         
         log.debug("申請詳細取得API呼び出し: correctionId={}", id);
         
+        Map<String, Object> response = new HashMap<>();
         try {
             Optional<TimeCorrection> correction = timeCorrectionService.getTimeCorrectionById(id);
             
             if (correction.isPresent()) {
                 log.debug("申請詳細取得API成功: correctionId={}", id);
-                return ResponseEntity.ok(correction.get());
+                response.put("success", true);
+                response.put("message", "申請詳細を取得しました");
+                response.put("data", correction.get());
+                return ResponseEntity.ok(response);
             } else {
                 log.warn("申請詳細取得API失敗: correctionId={} - 申請が見つかりません", id);
-                return ResponseEntity.notFound().build();
+                response.put("success", false);
+                response.put("message", "申請が見つかりません");
+                return ResponseEntity.ok(response);
             }
             
         } catch (Exception e) {
             log.error("申請詳細取得API例外: correctionId={}", id, e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "申請詳細取得中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -207,24 +251,30 @@ public class TimeCorrectionController {
      * GET /api/v1/time-corrections/user/pending-count
      */
     @GetMapping("/user/pending-count")
-    public ResponseEntity<PendingCountResponse> getUserPendingCount(
+    public ResponseEntity<Map<String, Object>> getUserPendingCount(
             @RequestHeader("X-User-Id") Long userId) {
         
         log.debug("ユーザー承認待ち申請数取得API呼び出し: userId={}", userId);
         
+        Map<String, Object> response = new HashMap<>();
         try {
             long count = timeCorrectionService.getUserPendingCount(userId);
             
-            PendingCountResponse response = new PendingCountResponse();
-            response.setUserId(userId);
-            response.setPendingCount(count);
+            response.put("success", true);
+            response.put("message", "ユーザーの承認待ち申請数を取得しました");
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", userId);
+            data.put("pendingCount", count);
+            response.put("data", data);
             
             log.debug("ユーザー承認待ち申請数取得API成功: userId={}, count={}", userId, count);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("ユーザー承認待ち申請数取得API例外: userId={}", userId, e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "ユーザーの承認待ち申請数取得中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 
@@ -233,67 +283,28 @@ public class TimeCorrectionController {
      * GET /api/v1/time-corrections/pending-count
      */
     @GetMapping("/pending-count")
-    public ResponseEntity<AllPendingCountResponse> getAllPendingCount() {
+    public ResponseEntity<Map<String, Object>> getAllPendingCount() {
         
         log.debug("全体承認待ち申請数取得API呼び出し");
         
+        Map<String, Object> response = new HashMap<>();
         try {
             long count = timeCorrectionService.getAllPendingCount();
             
-            AllPendingCountResponse response = new AllPendingCountResponse();
-            response.setPendingCount(count);
+            response.put("success", true);
+            response.put("message", "全体の承認待ち申請数を取得しました");
+            Map<String, Object> data = new HashMap<>();
+            data.put("pendingCount", count);
+            response.put("data", data);
             
             log.debug("全体承認待ち申請数取得API成功: count={}", count);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("全体承認待ち申請数取得API例外", e);
-            return ResponseEntity.internalServerError().build();
+            response.put("success", false);
+            response.put("message", "全体の承認待ち申請数取得中にエラーが発生しました");
+            return ResponseEntity.internalServerError().body(response);
         }
-    }
-
-    // レスポンスDTOクラス
-    public static class UserTimeCorrectionListResponse {
-        private Long userId;
-        private List<TimeCorrection> corrections;
-        private int totalCount;
-
-        // Getters and Setters
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
-        public List<TimeCorrection> getCorrections() { return corrections; }
-        public void setCorrections(List<TimeCorrection> corrections) { this.corrections = corrections; }
-        public int getTotalCount() { return totalCount; }
-        public void setTotalCount(int totalCount) { this.totalCount = totalCount; }
-    }
-
-    public static class PendingTimeCorrectionListResponse {
-        private List<TimeCorrection> corrections;
-        private int totalCount;
-
-        // Getters and Setters
-        public List<TimeCorrection> getCorrections() { return corrections; }
-        public void setCorrections(List<TimeCorrection> corrections) { this.corrections = corrections; }
-        public int getTotalCount() { return totalCount; }
-        public void setTotalCount(int totalCount) { this.totalCount = totalCount; }
-    }
-
-    public static class PendingCountResponse {
-        private Long userId;
-        private long pendingCount;
-
-        // Getters and Setters
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
-        public long getPendingCount() { return pendingCount; }
-        public void setPendingCount(long pendingCount) { this.pendingCount = pendingCount; }
-    }
-
-    public static class AllPendingCountResponse {
-        private long pendingCount;
-
-        // Getters and Setters
-        public long getPendingCount() { return pendingCount; }
-        public void setPendingCount(long pendingCount) { this.pendingCount = pendingCount; }
     }
 }

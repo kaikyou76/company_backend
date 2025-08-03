@@ -32,7 +32,8 @@ public class Notification {
     private OffsetDateTime createdAt;
 
     // Constructors
-    public Notification() {}
+    public Notification() {
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -97,5 +98,84 @@ public class Notification {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    // Helper methods
+
+    /**
+     * 通知が未読かどうかを確認
+     * 
+     * @return 未読の場合true
+     */
+    public boolean isUnread() {
+        return !Boolean.TRUE.equals(this.isRead);
+    }
+
+    /**
+     * 通知を既読にする
+     */
+    public void markAsRead() {
+        this.isRead = true;
+    }
+
+    /**
+     * 通知タイプが休暇申請かどうかを確認
+     * 
+     * @return 休暇申請通知の場合true
+     */
+    public boolean isLeaveNotification() {
+        return "leave".equals(this.type);
+    }
+
+    /**
+     * 通知タイプが時刻修正申請かどうかを確認
+     * 
+     * @return 時刻修正申請通知の場合true
+     */
+    public boolean isCorrectionNotification() {
+        return "correction".equals(this.type);
+    }
+
+    /**
+     * 通知タイプがシステム通知かどうかを確認
+     * 
+     * @return システム通知の場合true
+     */
+    public boolean isSystemNotification() {
+        return "system".equals(this.type);
+    }
+
+    /**
+     * 通知が古いかどうかを確認（30日以上前）
+     * 
+     * @return 30日以上前の通知の場合true
+     */
+    public boolean isOld() {
+        if (this.createdAt == null) {
+            return false;
+        }
+        return this.createdAt.isBefore(OffsetDateTime.now().minusDays(30));
+    }
+
+    /**
+     * 通知の作成用ファクトリーメソッド
+     * 
+     * @param userId    ユーザーID
+     * @param title     タイトル
+     * @param message   メッセージ
+     * @param type      通知タイプ
+     * @param relatedId 関連ID
+     * @return 新しい通知インスタンス
+     */
+    public static Notification create(Integer userId, String title, String message, String type, Integer relatedId) {
+        Notification notification = new Notification();
+        notification.setUserId(userId);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(type);
+        notification.setRelatedId(relatedId);
+        notification.setIsRead(false);
+        notification.setCreatedAt(OffsetDateTime.now());
+        return notification;
     }
 }

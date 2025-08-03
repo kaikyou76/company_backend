@@ -498,6 +498,42 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 
 ## 🔄 バッチ処理関連 API
 
+### POST /api/batch/daily-summary
+
+**日次勤怠集計バッチの実行**
+
+```json
+// Request
+{
+  "targetDate": "2025-02-08"  // オプション（省略時は当日）
+}
+
+// Response
+{
+  "success": true,
+  "message": "日次勤怠集計バッチを実行しました",
+  "data": {
+    "targetDate": "2025-02-08",
+    "processedCount": 45,
+    "userCount": 25,
+    "totalWorkTime": 2160,
+    "totalOvertimeTime": 320,
+    "totalLateNightTime": 180,
+    "totalHolidayTime": 0,
+    "averageWorkHours": 8.6,
+    "processingWarnings": []
+  },
+  "executedAt": "2025-02-08T10:30:00+09:00"
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "日次勤怠集計バッチの実行に失敗しました: パラメータが不正です",
+  "executedAt": "2025-02-08T10:30:00+09:00"
+}
+```
+
 ### POST /api/batch/monthly-summary
 
 **月次勤怠集計バッチの実行**
@@ -505,7 +541,7 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 ```json
 // Request
 {
-  "yearMonth": "2025-01"  // オプション（省略時は前月）
+  "targetMonth": "2025-01"  // オプション（省略時は前月）
 }
 
 // Response
@@ -518,15 +554,16 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
     "userCount": 25,
     "totalWorkDays": 520,
     "totalWorkTime": 83200,
-    "totalOvertimeTime": 6800,
-    "executedAt": "2025-01-18T10:30:00+09:00"
-  }
+    "totalOvertimeTime": 6800
+  },
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 
 // Error Response
 {
   "success": false,
-  "message": "月次勤怠集計バッチの実行に失敗しました: パラメータが不正です"
+  "message": "月次勤怠集計バッチの実行に失敗しました: パラメータが不正です",
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 ```
 
@@ -552,15 +589,16 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
     "errorCount": 2,
     "errorMessages": [
       "ユーザーID: 15, エラー: 入社日が未設定です"
-    ],
-    "executedAt": "2025-01-18T10:30:00+09:00"
-  }
+    ]
+  },
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 
 // Error Response
 {
   "success": false,
-  "message": "有給日数更新バッチの実行に失敗しました: データベース接続エラー"
+  "message": "有給日数更新バッチの実行に失敗しました: データベース接続エラー",
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 ```
 
@@ -580,20 +618,20 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
   "message": "データクリーンアップバッチを実行しました",
   "data": {
     "retentionMonths": 12,
-    "cutoffDate": "2024-01-18",
-    "deletedCount": 1250,
+    "cutoffDate": "2024-02-08",
+    "deletedCount": 0,
     "deletedDetails": {
-      "attendanceRecords": 1200,
-      "auditLogs": 50
-    },
-    "executedAt": "2025-01-18T10:30:00+09:00"
-  }
+      "system_logs": 0
+    }
+  },
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 
 // Error Response
 {
   "success": false,
-  "message": "データクリーンアップバッチの実行に失敗しました: 権限不足"
+  "message": "データクリーンアップバッチの実行に失敗しました: 権限不足",
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 ```
 
@@ -610,19 +648,52 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
   "success": true,
   "message": "データ修復バッチを実行しました",
   "data": {
-    "repairedCount": 8,
-    "repairedItems": [
-      "勤怠記録ID=12345: 退勤時刻を2025-01-17T18:00:00に設定",
-      "勤怠記録ID=12346: 退勤時刻を2025-01-16T17:30:00に設定"
-    ],
-    "executedAt": "2025-01-18T10:30:00+09:00"
-  }
+    "repairedItems": []
+  },
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 
 // Error Response
 {
   "success": false,
-  "message": "データ修復バッチの実行に失敗しました: システムエラー"
+  "message": "データ修復バッチの実行に失敗しました: システムエラー",
+  "executedAt": "2025-02-08T10:30:00+09:00"
+}
+```
+
+### POST /api/batch/overtime-monitoring
+
+**残業監視バッチの実行**
+
+```json
+// Request
+{
+  "targetMonth": "2025-02"  // オプション（省略時は当月）
+}
+
+// Response
+{
+  "success": true,
+  "message": "残業監視バッチを実行しました",
+  "data": {
+    "targetMonth": "2025-02",
+    "processedCount": 25,
+    "userCount": 25,
+    "overtimeReportsGenerated": 18,
+    "highOvertimeAlerts": 3,
+    "confirmedReports": 3,
+    "draftReports": 15,
+    "approvedReports": 7,
+    "processingWarnings": []
+  },
+  "executedAt": "2025-02-08T10:30:00+09:00"
+}
+
+// Error Response
+{
+  "success": false,
+  "message": "残業監視バッチの実行に失敗しました: システムエラー",
+  "executedAt": "2025-02-08T10:30:00+09:00"
 }
 ```
 
@@ -633,37 +704,33 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 ```json
 // Response
 {
-  "success": true,
-  "message": "バッチ処理ステータスを取得しました",
-  "data": {
-    "systemStatus": "HEALTHY",
-    "lastChecked": "2025-01-18T10:30:00+09:00",
-    "uptime": "5 days, 12 hours",
-    "databaseStatus": {
-      "totalUsers": 50,
-      "activeUsers": 48,
-      "totalAttendanceRecords": 12450,
-      "latestRecordDate": "2025-01-18"
+  "systemStatus": "HEALTHY",
+  "lastChecked": "2025-02-08T10:30:00+09:00",
+  "uptime": "5 days, 12 hours",
+  "databaseStatus": {
+    "totalUsers": 50,
+    "activeUsers": 48,
+    "totalAttendanceRecords": 12450,
+    "latestRecordDate": "2025-02-08"
+  },
+  "dataStatistics": {
+    "currentMonthRecords": 520,
+    "incompleteRecords": 2
+  },
+  "recentBatchExecutions": [
+    {
+      "type": "MONTHLY_SUMMARY",
+      "executedAt": "2025-02-01T02:00:00+09:00",
+      "status": "SUCCESS",
+      "duration": "45 seconds"
     },
-    "dataStatistics": {
-      "currentMonthRecords": 520,
-      "incompleteRecords": 2
-    },
-    "recentBatchExecutions": [
-      {
-        "type": "MONTHLY_SUMMARY",
-        "executedAt": "2025-01-01T02:00:00+09:00",
-        "status": "SUCCESS",
-        "duration": "45 seconds"
-      },
-      {
-        "type": "CLEANUP_DATA",
-        "executedAt": "2024-12-31T01:00:00+09:00",
-        "status": "SUCCESS",
-        "duration": "2 minutes"
-      }
-    ]
-  }
+    {
+      "type": "CLEANUP_DATA",
+      "executedAt": "2025-01-31T01:00:00+09:00",
+      "status": "SUCCESS",
+      "duration": "2 minutes"
+    }
+  ]
 }
 
 // Error Response
@@ -978,8 +1045,13 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 | レポート       | `/api/reports/*`              | ✅    | ✅      | ❌       |
 | ユーザー管理   | `/api/users/profile`          | ✅    | ✅      | ✅       |
 | ユーザー管理   | `/api/users/list`             | ✅    | ❌      | ❌       |
-| **バッチ処理** | `/api/batch/status`           | ✅    | ✅      | ❌       |
-| **バッチ処理** | `/api/batch/*`                | ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/status`           | ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/daily-summary`    | ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/monthly-summary`  | ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/update-paid-leave`| ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/cleanup-data`     | ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/repair-data`      | ✅    | ❌      | ❌       |
+| **バッチ処理** | `/api/batch/overtime-monitoring` | ✅    | ❌      | ❌       |
 | **バッチ管理** | `/api/v1/batch/*`             | ✅    | ✅      | ❌       |
 
 ---
@@ -997,6 +1069,8 @@ Content-Disposition: attachment; filename="paid_leave_report_20250101_20251231.c
 | DATA_002       | データの整合性エラーです             | 400             |
 | BATCH_001      | バッチ処理が既に実行中です           | 409             |
 | BATCH_002      | バッチパラメータが不正です           | 400             |
+| BATCH_003      | バッチ実行権限が不足しています       | 403             |
+| BATCH_004      | バッチジョブが見つかりません         | 404             |
 | SYSTEM_001     | システムエラーが発生しました         | 500             |
 | DATABASE_001   | データベース接続エラーです           | 500             |
 
@@ -1016,17 +1090,29 @@ curl -X POST http://localhost:8080/api/auth/login \
 curl -X GET http://localhost:8080/api/batch/status \
   -H "Authorization: Bearer YOUR_TOKEN"
 
-# 3. 月次集計バッチ実行
+# 3. 日次集計バッチ実行
+curl -X POST http://localhost:8080/api/batch/daily-summary \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"targetDate":"2025-02-08"}'
+
+# 4. 月次集計バッチ実行
 curl -X POST http://localhost:8080/api/batch/monthly-summary \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"yearMonth":"2025-01"}'
+  -d '{"targetMonth":"2025-01"}'
 
-# 4. データクリーンアップ実行
+# 5. データクリーンアップ実行
 curl -X POST http://localhost:8080/api/batch/cleanup-data \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"retentionMonths":6}'
+  -d '{"retentionMonths":12}'
+
+# 6. 残業監視バッチ実行
+curl -X POST http://localhost:8080/api/batch/overtime-monitoring \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"targetMonth":"2025-02"}'
 ```
 
 ### レポート出力例

@@ -1,0 +1,1078 @@
+package com.example.companybackend.service;
+
+import com.example.companybackend.dto.auth.AdminPositionsResponse;
+import com.example.companybackend.dto.auth.CsvUserData;
+import com.example.companybackend.entity.Department;
+import com.example.companybackend.entity.Position;
+import com.example.companybackend.entity.User;
+import com.example.companybackend.repository.DepartmentRepository;
+import com.example.companybackend.repository.PositionRepository;
+import com.example.companybackend.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * 认证服务测试类
+ * 
+ * 测试目标：
+ * - 测试文件：AuthService.java
+ * - 测试类：com.example.companybackend.service.AuthService
+ * - 模拟依赖：
+ *   - AuthenticationManager（认证管理器）
+ *   - UserRepository（用户仓库）
+ *   - PositionRepository（职位仓库）
+ *   - DepartmentRepository（部门仓库）
+ *   - PasswordEncoder（密码编码器）
+ *   - JwtTokenProviderService（JWT令牌提供服务）
+ * 
+ * 测试规范和技巧：
+ * 1. 使用@ExtendWith(MockitoExtension.class)启用Mockito功能
+ * 2. 使用@InjectMocks注入被测试的服务
+ * 3. 使用@Mock模拟依赖服务，实现独立测试
+ * 4. 遵循Given-When-Then测试模式
+ * 5. 为每个方法编写成功和异常场景的测试用例
+ * 6. 验证重要返回值和异常
+ */
+@ExtendWith(MockitoExtension.class)
+public class AuthServiceTest {
+
+    /**
+     * AuthService的被测试对象
+     * 依赖的服务将被模拟，仅测试此服务
+     */
+    @InjectMocks
+    private AuthService authService;
+
+    /**
+     * AuthenticationManager的模拟对象
+     * 模拟用户认证处理
+     */
+    @Mock
+    private AuthenticationManager authenticationManager;
+
+    /**
+     * UserRepository的模拟对象
+     * 模拟用户信息的数据库访问
+     */
+    @Mock
+    private UserRepository userRepository;
+
+    /**
+     * PositionRepository的模拟对象
+     * 模拟职位信息的数据库访问
+     */
+    @Mock
+    private PositionRepository positionRepository;
+
+    /**
+     * DepartmentRepository的模拟对象
+     * 模拟部门信息的数据库访问
+     */
+    @Mock
+    private DepartmentRepository departmentRepository;
+
+    /**
+     * PasswordEncoder的模拟对象
+     * 模拟密码哈希处理
+     */
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    /**
+     * JwtTokenProviderService的模拟对象
+     * 模拟JWT令牌生成处理
+     */
+    @Mock
+    private JwtTokenProviderService tokenProvider;
+
+    /**
+     * 测试数据
+     */
+    private User testUser;
+    private User adminUser;
+    private Position adminPosition;
+
+    /**
+     * 每个测试方法执行前的初始化处理
+     * 设置测试数据
+     */
+    @BeforeEach
+    void setUp() {
+        // 创建测试用户
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("testuser");
+        testUser.setPasswordHash("encodedPassword");
+        testUser.setLocationType("office");
+        testUser.setCreatedAt(OffsetDateTime.now());
+        testUser.setUpdatedAt(OffsetDateTime.now());
+
+        // 创建管理员用户
+        adminUser = new User();
+        adminUser.setId(2L);
+        adminUser.setUsername("admin");
+        adminUser.setPasswordHash("encodedAdminPassword");
+        adminUser.setLocationType("office");
+        adminUser.setPositionId(1);
+        adminUser.setCreatedAt(OffsetDateTime.now());
+        adminUser.setUpdatedAt(OffsetDateTime.now());
+
+        // 创建管理员职位
+        adminPosition = new Position();
+        adminPosition.setId(1L);
+        adminPosition.setName("管理者");
+        adminPosition.setLevel(5);
+    }
+
+    /**
+     * 测试用例：用户认证和令牌生成成功
+     * 
+     * 测试目标方法：
+     * - AuthService.authenticateUser()
+     * 
+     * 测试场景：
+     * - 使用有效的用户名和密码进行认证
+     * - 认证管理器认证成功
+     * - 令牌提供服务生成令牌
+     * 
+     * 预期结果：
+     * - 令牌成功生成
+     * - 调用认证管理器
+     * - 调用令牌提供服务
+     * 
+     * 模拟的依赖方法：
+     * - AuthenticationManager.authenticate()
+     * - JwtTokenProviderService.generateToken()
+     */
+    @Test
+    void testAuthenticateUser_Success() {
+        // Given
+        String username = "testuser";
+        String password = "password";
+        String expectedToken = "generated-jwt-token";
+
+        Authentication authentication = mock(Authentication.class);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(tokenProvider.generateToken(authentication)).thenReturn(expectedToken);
+
+        // When
+        String actualToken = authService.authenticateUser(username, password);
+
+        // Then
+        assertEquals(expectedToken, actualToken);
+        verify(authenticationManager, times(1))
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(tokenProvider, times(1)).generateToken(authentication);
+    }
+
+    /**
+     * 测试用例：用户认证失败
+     * 
+     * 测试目标方法：
+     * - AuthService.authenticateUser()
+     * 
+     * 测试场景：
+     * - 使用无效的用户名和密码进行认证
+     * - 认证管理器抛出异常
+     * 
+     * 预期结果：
+     * - 抛出RuntimeException异常
+     * 
+     * 模拟的依赖方法：
+     * - AuthenticationManager.authenticate()
+     */
+    @Test
+    void testAuthenticateUser_Failure() {
+        // Given
+        String username = "testuser";
+        String password = "wrongpassword";
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new RuntimeException("认证错误"));
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.authenticateUser(username, password);
+        });
+
+        assertTrue(exception.getMessage().contains("認証に失敗しました"));
+        verify(authenticationManager, times(1))
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(tokenProvider, never()).generateToken(any(Authentication.class));
+    }
+
+    /**
+     * 测试用例：普通用户注册成功
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUser()
+     * 
+     * 测试场景：
+     * - 注册新用户
+     * - 用户名未被占用
+     * - 密码正确哈希
+     * - 用户保存到数据库
+     * 
+     * 预期结果：
+     * - 用户成功注册
+     * - 密码被哈希
+     * - 设置创建时间和更新时间
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.existsByUsername()
+     * - PasswordEncoder.encode()
+     * - UserRepository.save()
+     */
+    @Test
+    void testRegisterUser_Success() {
+        // Given
+        User newUser = new User();
+        newUser.setUsername("newuser");
+        newUser.setPasswordHash("plainPassword");
+        newUser.setLocationType("office");
+
+        when(userRepository.existsByUsername("newuser")).thenReturn(false);
+        when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(3L);
+            return user;
+        });
+
+        // When
+        User registeredUser = authService.registerUser(newUser);
+
+        // Then
+        assertNotNull(registeredUser);
+        assertEquals("newuser", registeredUser.getUsername());
+        assertEquals("encodedPassword", registeredUser.getPasswordHash());
+        assertNotNull(registeredUser.getCreatedAt());
+        assertNotNull(registeredUser.getUpdatedAt());
+        assertNull(registeredUser.getManagerId());
+        assertNull(registeredUser.getDepartmentId());
+        assertNull(registeredUser.getPositionId());
+        verify(userRepository, times(1)).existsByUsername("newuser");
+        verify(passwordEncoder, times(1)).encode("plainPassword");
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：用户名重复导致普通用户注册失败
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUser()
+     * 
+     * 测试场景：
+     * - 使用已被占用的用户名注册用户
+     * - 用户名检查返回true
+     * 
+     * 预期结果：
+     * - 抛出RuntimeException异常
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.existsByUsername()
+     */
+    @Test
+    void testRegisterUser_DuplicateUsername() {
+        // Given
+        User newUser = new User();
+        newUser.setUsername("existinguser");
+        newUser.setPasswordHash("plainPassword");
+        newUser.setLocationType("office");
+
+        when(userRepository.existsByUsername("existinguser")).thenReturn(true);
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.registerUser(newUser);
+        });
+
+        assertEquals("ユーザー名は既に使用されています", exception.getMessage());
+        verify(userRepository, times(1)).existsByUsername("existinguser");
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：管理员用户注册成功
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUserByAdmin()
+     * 
+     * 测试场景：
+     * - 管理员用户注册新用户
+     * - 管理员用户存在且具有适当权限
+     * - 新用户信息有效
+     * 
+     * 预期结果：
+     * - 用户成功注册
+     * - 密码被哈希
+     * - 设置创建时间和更新时间
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findByUsername()
+     * - PositionRepository.findById()
+     * - UserRepository.existsByUsername()
+     * - PositionRepository.existsById()
+     * - DepartmentRepository.existsById()
+     * - PasswordEncoder.encode()
+     * - UserRepository.save()
+     */
+    @Test
+    void testRegisterUserByAdmin_Success() {
+        // Given
+        User newUser = new User();
+        newUser.setUsername("newuser");
+        newUser.setPasswordHash("plainPassword");
+        newUser.setLocationType("office");
+        newUser.setPositionId(1);
+        newUser.setDepartmentId(1);
+
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(adminUser));
+        when(positionRepository.findById(1)).thenReturn(Optional.of(adminPosition));
+        when(userRepository.existsByUsername("newuser")).thenReturn(false);
+        when(positionRepository.existsById(1)).thenReturn(true);
+        when(departmentRepository.existsById(1)).thenReturn(true);
+        when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(3L);
+            return user;
+        });
+
+        // When
+        User registeredUser = authService.registerUserByAdmin(newUser, "admin");
+
+        // Then
+        assertNotNull(registeredUser);
+        assertEquals("newuser", registeredUser.getUsername());
+        assertEquals("encodedPassword", registeredUser.getPasswordHash());
+        assertNotNull(registeredUser.getCreatedAt());
+        assertNotNull(registeredUser.getUpdatedAt());
+        verify(userRepository, times(1)).findByUsername("admin");
+        verify(positionRepository, times(1)).findById(1);
+        verify(userRepository, times(1)).existsByUsername("newuser");
+        verify(positionRepository, times(1)).existsById(1);
+        verify(departmentRepository, times(1)).existsById(1);
+        verify(passwordEncoder, times(1)).encode("plainPassword");
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：管理员用户不存在导致注册失败
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUserByAdmin()
+     * 
+     * 测试场景：
+     * - 使用不存在的管理员用户注册用户
+     * - 管理员用户查询返回空Optional
+     * 
+     * 预期结果：
+     * - 抛出RuntimeException异常
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findByUsername()
+     */
+    @Test
+    void testRegisterUserByAdmin_AdminNotFound() {
+        // Given
+        User newUser = new User();
+        newUser.setUsername("newuser");
+        newUser.setPasswordHash("plainPassword");
+        newUser.setLocationType("office");
+
+        when(userRepository.findByUsername("nonexistent_admin")).thenReturn(Optional.empty());
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.registerUserByAdmin(newUser, "nonexistent_admin");
+        });
+
+        assertEquals("管理者ユーザーが見つかりません", exception.getMessage());
+        verify(userRepository, times(1)).findByUsername("nonexistent_admin");
+        verify(positionRepository, never()).findById(anyInt());
+        verify(userRepository, never()).existsByUsername(anyString());
+        verify(positionRepository, never()).existsById(anyInt());
+        verify(departmentRepository, never()).existsById(anyInt());
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：权限不足导致管理员用户注册失败
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUserByAdmin()
+     * 
+     * 测试场景：
+     * - 使用权限级别较低的用户注册其他用户
+     * - 管理员用户存在但level < 5
+     * 
+     * 预期结果：
+     * - 抛出RuntimeException异常
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findByUsername()
+     * - PositionRepository.findById()
+     */
+    @Test
+    void testRegisterUserByAdmin_InsufficientAuthority() {
+        // Given
+        User newUser = new User();
+        newUser.setUsername("newuser");
+        newUser.setPasswordHash("plainPassword");
+        newUser.setLocationType("office");
+
+        User lowLevelUser = new User();
+        lowLevelUser.setId(3L);
+        lowLevelUser.setUsername("lowleveluser");
+        lowLevelUser.setPositionId(2);
+
+        Position lowLevelPosition = new Position();
+        lowLevelPosition.setId(2L);
+        lowLevelPosition.setLevel(3);
+
+        when(userRepository.findByUsername("lowleveluser")).thenReturn(Optional.of(lowLevelUser));
+        when(positionRepository.findById(2)).thenReturn(Optional.of(lowLevelPosition));
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.registerUserByAdmin(newUser, "lowleveluser");
+        });
+
+        assertEquals("権限が不足しています。管理者ユーザーのみ登録可能です。", exception.getMessage());
+        verify(userRepository, times(1)).findByUsername("lowleveluser");
+        verify(positionRepository, times(1)).findById(2);
+        verify(userRepository, never()).existsByUsername(anyString());
+        verify(positionRepository, never()).existsById(anyInt());
+        verify(departmentRepository, never()).existsById(anyInt());
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：通过ID获取用户成功
+     * 
+     * 测试目标方法：
+     * - AuthService.getUserById()
+     * 
+     * 测试场景：
+     * - 使用存在的用户ID获取用户信息
+     * - 仓库返回用户
+     * 
+     * 预期结果：
+     * - 成功获取用户
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findById()
+     */
+    @Test
+    void testGetUserById_Success() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        // When
+        Optional<User> result = authService.getUserById(1L);
+
+        // Then
+        assertTrue(result.isPresent());
+        assertEquals(testUser, result.get());
+        verify(userRepository, times(1)).findById(1L);
+    }
+
+    /**
+     * 测试用例：通过ID获取用户但用户不存在
+     * 
+     * 测试目标方法：
+     * - AuthService.getUserById()
+     * 
+     * 测试场景：
+     * - 使用不存在的用户ID获取用户信息
+     * - 仓库返回空Optional
+     * 
+     * 预期结果：
+     * - 返回空Optional
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findById()
+     */
+    @Test
+    void testGetUserById_NotFound() {
+        // Given
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When
+        Optional<User> result = authService.getUserById(999L);
+
+        // Then
+        assertFalse(result.isPresent());
+        verify(userRepository, times(1)).findById(999L);
+    }
+
+    /**
+     * 测试用例：通过用户名获取用户成功
+     * 
+     * 测试目标方法：
+     * - AuthService.getUserByUsername()
+     * 
+     * 测试场景：
+     * - 使用存在的用户名获取用户信息
+     * - 仓库返回用户
+     * 
+     * 预期结果：
+     * - 成功获取用户
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findByUsername()
+     */
+    @Test
+    void testGetUserByUsername_Success() {
+        // Given
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+
+        // When
+        User result = authService.getUserByUsername("testuser");
+
+        // Then
+        assertEquals(testUser, result);
+        verify(userRepository, times(1)).findByUsername("testuser");
+    }
+
+    /**
+     * 测试用例：通过用户名获取用户但用户不存在
+     * 
+     * 测试目标方法：
+     * - AuthService.getUserByUsername()
+     * 
+     * 测试场景：
+     * - 使用不存在的用户名获取用户信息
+     * - 仓库返回空Optional
+     * 
+     * 预期结果：
+     * - 抛出RuntimeException异常
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.findByUsername()
+     */
+    @Test
+    void testGetUserByUsername_NotFound() {
+        // Given
+        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.getUserByUsername("nonexistent");
+        });
+
+        assertEquals("ユーザーが見つかりません", exception.getMessage());
+        verify(userRepository, times(1)).findByUsername("nonexistent");
+    }
+
+    /**
+     * 测试用例：检查用户名存在（存在的情况）
+     * 
+     * 测试目标方法：
+     * - AuthService.checkUsernameExists()
+     * 
+     * 测试场景：
+     * - 检查存在的用户名
+     * - 仓库返回true
+     * 
+     * 预期结果：
+     * - 返回true
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.existsByUsername()
+     */
+    @Test
+    void testCheckUsernameExists_Exists() {
+        // Given
+        when(userRepository.existsByUsername("testuser")).thenReturn(true);
+
+        // When
+        boolean result = authService.checkUsernameExists("testuser");
+
+        // Then
+        assertTrue(result);
+        verify(userRepository, times(1)).existsByUsername("testuser");
+    }
+
+    /**
+     * 测试用例：检查用户名存在（不存在的情况）
+     * 
+     * 测试目标方法：
+     * - AuthService.checkUsernameExists()
+     * 
+     * 测试场景：
+     * - 检查不存在的用户名
+     * - 仓库返回false
+     * 
+     * 预期结果：
+     * - 返回false
+     * 
+     * 模拟的依赖方法：
+     * - UserRepository.existsByUsername()
+     */
+    @Test
+    void testCheckUsernameExists_NotExists() {
+        // Given
+        when(userRepository.existsByUsername("nonexistent")).thenReturn(false);
+
+        // When
+        boolean result = authService.checkUsernameExists("nonexistent");
+
+        // Then
+        assertFalse(result);
+        verify(userRepository, times(1)).existsByUsername("nonexistent");
+    }
+
+    /**
+     * 测试用例：通过部门ID获取部门名成功
+     * 
+     * 测试目标方法：
+     * - AuthService.getDepartmentNameById()
+     * 
+     * 测试场景：
+     * - 使用存在的部门ID获取部门名
+     * - 仓库返回部门
+     * 
+     * 预期结果：
+     * - 返回部门名
+     * 
+     * 模拟的依赖方法：
+     * - DepartmentRepository.findById()
+     */
+    @Test
+    void testGetDepartmentNameById_Success() {
+        // Given
+        Integer departmentId = 1;
+        Department department = new Department();
+        department.setId(1L);
+        department.setName("开发部");
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(department));
+
+        // When
+        String result = authService.getDepartmentNameById(departmentId);
+
+        // Then
+        assertEquals("开发部", result);
+        verify(departmentRepository, times(1)).findById(departmentId);
+    }
+
+    /**
+     * 测试用例：通过部门ID获取部门名但部门不存在
+     * 
+     * 测试目标方法：
+     * - AuthService.getDepartmentNameById()
+     * 
+     * 测试场景：
+     * - 使用不存在的部门ID获取部门名
+     * - 仓库返回空Optional
+     * 
+     * 预期结果：
+     * - 返回null
+     * 
+     * 模拟的依赖方法：
+     * - DepartmentRepository.findById()
+     */
+    @Test
+    void testGetDepartmentNameById_NotFound() {
+        // Given
+        Integer departmentId = 999;
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.empty());
+
+        // When
+        String result = authService.getDepartmentNameById(departmentId);
+
+        // Then
+        assertNull(result);
+        verify(departmentRepository, times(1)).findById(departmentId);
+    }
+
+    /**
+     * 测试用例：部门ID为null时获取部门名
+     * 
+     * 测试目标方法：
+     * - AuthService.getDepartmentNameById()
+     * 
+     * 测试场景：
+     * - 使用null的部门ID获取部门名
+     * 
+     * 预期结果：
+     * - 返回null
+     * 
+     * 模拟的依赖方法：
+     * - 无
+     */
+    @Test
+    void testGetDepartmentNameById_NullId() {
+        // When
+        String result = authService.getDepartmentNameById(null);
+
+        // Then
+        assertNull(result);
+        verify(departmentRepository, never()).findById(anyInt());
+    }
+
+    /**
+     * 测试用例：通过职位ID获取职位名成功
+     * 
+     * 测试目标方法：
+     * - AuthService.getPositionNameById()
+     * 
+     * 测试场景：
+     * - 使用存在的职位ID获取职位名
+     * - 仓库返回职位
+     * 
+     * 预期结果：
+     * - 返回职位名
+     * 
+     * 模拟的依赖方法：
+     * - PositionRepository.findById()
+     */
+    @Test
+    void testGetPositionNameById_Success() {
+        // Given
+        Integer positionId = 1;
+        Position position = new Position();
+        position.setId(1L);
+        position.setName("工程师");
+
+        when(positionRepository.findById(positionId)).thenReturn(Optional.of(position));
+
+        // When
+        String result = authService.getPositionNameById(positionId);
+
+        // Then
+        assertEquals("工程师", result);
+        verify(positionRepository, times(1)).findById(positionId);
+    }
+
+    /**
+     * 测试用例：通过职位ID获取职位名但职位不存在
+     * 
+     * 测试目标方法：
+     * - AuthService.getPositionNameById()
+     * 
+     * 测试场景：
+     * - 使用不存在的职位ID获取职位名
+     * - 仓库返回空Optional
+     * 
+     * 预期结果：
+     * - 返回null
+     * 
+     * 模拟的依赖方法：
+     * - PositionRepository.findById()
+     */
+    @Test
+    void testGetPositionNameById_NotFound() {
+        // Given
+        Integer positionId = 999;
+
+        when(positionRepository.findById(positionId)).thenReturn(Optional.empty());
+
+        // When
+        String result = authService.getPositionNameById(positionId);
+
+        // Then
+        assertNull(result);
+        verify(positionRepository, times(1)).findById(positionId);
+    }
+
+    /**
+     * 测试用例：职位ID为null时获取职位名
+     * 
+     * 测试目标方法：
+     * - AuthService.getPositionNameById()
+     * 
+     * 测试场景：
+     * - 使用null的职位ID获取职位名
+     * 
+     * 预期结果：
+     * - 返回null
+     * 
+     * 模拟的依赖方法：
+     * - 无
+     */
+    @Test
+    void testGetPositionNameById_NullId() {
+        // When
+        String result = authService.getPositionNameById(null);
+
+        // Then
+        assertNull(result);
+        verify(positionRepository, never()).findById(anyInt());
+    }
+
+    /**
+     * 测试用例：获取管理员职位列表成功
+     * 
+     * 测试目标方法：
+     * - AuthService.getAdminPositions()
+     * 
+     * 测试场景：
+     * - 从仓库获取level >= 5的职位
+     * - 仓库返回职位列表
+     * 
+     * 预期结果：
+     * - 返回职位数据列表
+     * 
+     * 模拟的依赖方法：
+     * - PositionRepository.findByLevelGreaterThanEqualOrderByLevelDesc()
+     */
+    @Test
+    void testGetAdminPositions_Success() {
+        // Given
+        List<Position> positions = new ArrayList<>();
+        Position position1 = new Position();
+        position1.setId(1L);
+        position1.setName("管理者");
+        position1.setLevel(5);
+        positions.add(position1);
+
+        Position position2 = new Position();
+        position2.setId(2L);
+        position2.setName("スーパーバイザー");
+        position2.setLevel(6);
+        positions.add(position2);
+
+        when(positionRepository.findByLevelGreaterThanEqualOrderByLevelDesc(5)).thenReturn(positions);
+
+        // When
+        List<AdminPositionsResponse.PositionData> result = authService.getAdminPositions();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("管理者", result.get(0).getName()); // 按level降序排列，但期望结果应按实际顺序
+        assertEquals("スーパーバイザー", result.get(1).getName());
+        verify(positionRepository, times(1)).findByLevelGreaterThanEqualOrderByLevelDesc(5);
+    }
+
+    /**
+     * 测试用例：通过CSV用户数据列表批量注册用户成功
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUsersFromCsv(List<CsvUserData>)
+     * 
+     * 测试场景：
+     * - 使用有效的CSV用户数据批量注册
+     * - 所有用户成功注册
+     * 
+     * 预期结果：
+     * - 返回成功和失败计数数组
+     * 
+     * 模拟的依赖方法：
+     * - PasswordEncoder.encode()
+     * - UserRepository.existsByUsername()
+     * - UserRepository.save()
+     */
+    @Test
+    void testRegisterUsersFromCsvList_Success() {
+        // Given
+        List<CsvUserData> csvUsers = new ArrayList<>();
+        CsvUserData user1 = new CsvUserData();
+        user1.setUsername("user1");
+        user1.setPassword("password1");
+        user1.setFullName("User One");
+        user1.setLocationType("office");
+        csvUsers.add(user1);
+
+        CsvUserData user2 = new CsvUserData();
+        user2.setUsername("user2");
+        user2.setPassword("password2");
+        user2.setFullName("User Two");
+        user2.setLocationType("office");
+        csvUsers.add(user2);
+
+        when(passwordEncoder.encode(anyString())).thenAnswer(invocation -> 
+            "encoded_" + invocation.getArgument(0));
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            if (user.getId() == null) {
+                user.setId(1L);
+            }
+            return user;
+        });
+
+        // When
+        int[] result = authService.registerUsersFromCsv(csvUsers);
+
+        // Then
+        assertEquals(2, result[0]); // 成功数
+        assertEquals(0, result[1]); // 失败数
+        verify(passwordEncoder, times(2)).encode(anyString());
+        verify(userRepository, times(2)).existsByUsername(anyString());
+        verify(userRepository, times(2)).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：通过CSV用户数据列表批量注册用户但有重复用户
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUsersFromCsv(List<CsvUserData>)
+     * 
+     * 测试场景：
+     * - 使用包含重复用户名的CSV用户数据批量注册
+     * - 仅部分用户成功注册
+     * 
+     * 预期结果：
+     * - 返回成功和失败计数数组
+     * 
+     * 模拟的依赖方法：
+     * - PasswordEncoder.encode()
+     * - UserRepository.existsByUsername()
+     * - UserRepository.save()
+     */
+    @Test
+    void testRegisterUsersFromCsvList_WithDuplicates() {
+        // Given
+        List<CsvUserData> csvUsers = new ArrayList<>();
+        CsvUserData user1 = new CsvUserData();
+        user1.setUsername("user1");
+        user1.setPassword("password1");
+        user1.setFullName("User One");
+        user1.setLocationType("office");
+        csvUsers.add(user1);
+
+        CsvUserData user2 = new CsvUserData();
+        user2.setUsername("user2");
+        user2.setPassword("password2");
+        user2.setFullName("User Two");
+        user2.setLocationType("office");
+        csvUsers.add(user2);
+
+        when(passwordEncoder.encode("password1")).thenReturn("encoded_password1");
+        when(passwordEncoder.encode("password2")).thenReturn("encoded_password2");
+        when(userRepository.existsByUsername("user1")).thenReturn(false);
+        when(userRepository.existsByUsername("user2")).thenReturn(true); // 重复用户
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            if (user.getId() == null) {
+                user.setId(1L);
+            }
+            return user;
+        });
+
+        // When
+        int[] result = authService.registerUsersFromCsv(csvUsers);
+
+        // Then
+        assertEquals(1, result[0]); // 成功数
+        assertEquals(1, result[1]); // 失败数
+        verify(passwordEncoder, times(1)).encode("password1");
+        verify(passwordEncoder, times(1)).encode("password2");
+        verify(userRepository, times(2)).existsByUsername(anyString());
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：通过CSV文件批量注册用户成功
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUsersFromCsv(MultipartFile)
+     * 
+     * 测试场景：
+     * - 使用有效的CSV文件批量注册用户
+     * - 文件成功读取并处理
+     * 
+     * 预期结果：
+     * - 返回处理结果消息
+     * 
+     * 模拟的依赖方法：
+     * - MultipartFile.getInputStream()
+     * - PasswordEncoder.encode()
+     * - UserRepository.existsByUsername()
+     * - UserRepository.save()
+     */
+    @Test
+    void testRegisterUsersFromCsvFile_Success() throws IOException {
+        // Given
+        String csvContent = "username,password,fullname\nuser1,password1,User One\nuser2,password2,User Two";
+        InputStream inputStream = new ByteArrayInputStream(csvContent.getBytes());
+        MultipartFile multipartFile = mock(MultipartFile.class);
+
+        when(multipartFile.getInputStream()).thenReturn(inputStream);
+        when(passwordEncoder.encode(anyString())).thenAnswer(invocation ->
+            "encoded_" + invocation.getArgument(0));
+        when(userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            if (user.getId() == null) {
+                user.setId(1L);
+            }
+            return user;
+        });
+
+        // When
+        String result = authService.registerUsersFromCsv(multipartFile);
+
+        // Then
+        assertTrue(result.contains("登録成功: 2件"));
+        assertTrue(result.contains("登録失敗: 0件"));
+        verify(multipartFile, times(1)).getInputStream();
+        verify(passwordEncoder, times(2)).encode(anyString());
+        verify(userRepository, times(2)).existsByUsername(anyString());
+        verify(userRepository, times(2)).save(any(User.class));
+    }
+
+    /**
+     * 测试用例：通过CSV文件批量注册用户但发生IO异常
+     * 
+     * 测试目标方法：
+     * - AuthService.registerUsersFromCsv(MultipartFile)
+     * 
+     * 测试场景：
+     * - 使用无效的CSV文件批量注册用户
+     * - 获取输入流时发生IOException
+     * 
+     * 预期结果：
+     * - 抛出RuntimeException异常
+     * 
+     * 模拟的依赖方法：
+     * - MultipartFile.getInputStream()
+     */
+    @Test
+    void testRegisterUsersFromCsvFile_IOException() throws IOException {
+        // Given
+        MultipartFile multipartFile = mock(MultipartFile.class);
+        when(multipartFile.getInputStream()).thenThrow(new IOException("ファイル読み込みエラー"));
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            authService.registerUsersFromCsv(multipartFile);
+        });
+
+        assertTrue(exception.getMessage().contains("CSVファイルの処理中にエラーが発生しました"));
+        verify(multipartFile, times(1)).getInputStream();
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).existsByUsername(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+}

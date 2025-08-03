@@ -1,0 +1,194 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.example:company_backend >---------------------
+[INFO] Building company_backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.4.8:run (default-cli) > test-compile @ company_backend >>>
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ company_backend ---
+[INFO] argLine set to -javaagent:C:\\Users\\kaikyou\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=f:\\Company_system_project\\company_backend\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ company_backend ---
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ company_backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 105 source files with javac [debug parameters release 21] to target\classes
+[INFO] /f:/Company_system_project/company_backend/src/main/java/com/example/companybackend/security/JwtTokenProvider.java: f:\Company_system_project\company_backend\src\main\java\com\example\companybackend\security\JwtTokenProvider.java‚Í„§‚³‚ê‚È‚¢API‚ğg—p‚Ü‚½‚ÍƒI[ƒo[ƒ‰ƒCƒh‚µ‚Ä‚¢‚Ü‚·B
+[INFO] /f:/Company_system_project/company_backend/src/main/java/com/example/companybackend/security/JwtTokenProvider.java: Ú×‚ÍA-Xlint:deprecationƒIƒvƒVƒ‡ƒ“‚ğw’è‚µ‚ÄÄƒRƒ“ƒpƒCƒ‹‚µ‚Ä‚­‚¾‚³‚¢B
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ company_backend ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ company_backend ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 15 source files with javac [debug parameters release 21] to target\test-classes
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java:[64,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java:[64,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java:[64,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java:[64,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceControllerTest.java:[64,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceSummaryControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceSummaryControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceSummaryControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceSummaryControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AttendanceSummaryControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AuthControllerTest.java:[69,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AuthControllerTest.java:[69,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AuthControllerTest.java:[69,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AuthControllerTest.java:[69,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/AuthControllerTest.java:[69,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/DepartmentControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/DepartmentControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/DepartmentControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/DepartmentControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/DepartmentControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/LeaveRequestControllerTest.java:[54,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/LeaveRequestControllerTest.java:[54,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/LeaveRequestControllerTest.java:[54,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/LeaveRequestControllerTest.java:[54,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/LeaveRequestControllerTest.java:[54,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/PositionControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/PositionControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/PositionControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/PositionControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/PositionControllerTest.java:[46,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/SystemLogControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/SystemLogControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/SystemLogControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/SystemLogControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/SystemLogControllerTest.java:[72,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/UserControllerTest.java:[39,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/UserControllerTest.java:[39,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/UserControllerTest.java:[39,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/UserControllerTest.java:[39,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/controller/UserControllerTest.java:[39,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[30,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[30,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[30,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[30,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[30,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[33,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[33,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[33,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[33,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[33,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[36,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[36,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[36,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[36,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[WARNING] /f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java:[36,6] org.springframework.boot.test.mock.mockito‚Ìorg.springframework.boot.test.mock.mockito.MockBean‚Í„§‚³‚ê‚Ä‚¨‚ç‚¸Aíœ—p‚Éƒ}[ƒN‚³‚ê‚Ä‚¢‚Ü‚·
+[INFO] 
+[INFO] <<< spring-boot:3.4.8:run (default-cli) < test-compile @ company_backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.4.8:run (default-cli) @ company_backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.8)
+
+2025-08-02T08:12:26.553+09:00  INFO 26944 --- [company_backend] [           main] c.e.c.CompanyBackendApplication          : Starting CompanyBackendApplication using Java 21.0.7 with PID 26944 (F:\Company_system_project\company_backend\target\classes started by kaikyou in f:\Company_system_project\company_backend)
+2025-08-02T08:12:26.553+09:00 DEBUG 26944 --- [company_backend] [           main] c.e.c.CompanyBackendApplication          : Running with Spring Boot v3.4.8, Spring v6.2.9
+2025-08-02T08:12:26.553+09:00  INFO 26944 --- [company_backend] [           main] c.e.c.CompanyBackendApplication          : The following 1 profile is active: "dev"
+2025-08-02T08:12:27.270+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.f.s.DefaultListableBeanFactory     : Overriding bean definition for bean 'dataCleanupJob' with a different definition: replacing [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=dailyAttendanceBatchConfig; factoryMethodName=dataCleanupJob; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [com/example/companybackend/batch/config/DailyAttendanceBatchConfig.class]] with [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=dataCleanupBatchConfig; factoryMethodName=dataCleanupJob; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [com/example/companybackend/batch/config/DataCleanupBatchConfig.class]]
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Finished Spring Batch infrastructure beans configuration in 4 ms.
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.f.s.DefaultListableBeanFactory     : Overriding bean definition for bean 'dataRepairJob' with a different definition: replacing [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=dailyAttendanceBatchConfig; factoryMethodName=dataRepairJob; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [com/example/companybackend/batch/config/DailyAttendanceBatchConfig.class]] with [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=dataRepairBatchConfig; factoryMethodName=dataRepairJob; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [com/example/companybackend/batch/config/DataRepairBatchConfig.class]]
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobRepository already defined in the application context, skipping the registration of a jobRepository
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobExplorer already defined in the application context, skipping the registration of a jobExplorer
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobLauncher already defined in the application context, skipping the registration of a jobLauncher
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobRegistry already defined in the application context, skipping the registration of a jobRegistry
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobRegistrySmartInitializingSingleton already defined in the application context, skipping the registration of a jobRegistrySmartInitializingSingleton
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobOperator already defined in the application context, skipping the registration of a jobOperator
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Finished Spring Batch infrastructure beans configuration in 0 ms.
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.f.s.DefaultListableBeanFactory     : Overriding bean definition for bean 'paidLeaveUpdateJob' with a different definition: replacing [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=dailyAttendanceBatchConfig; factoryMethodName=paidLeaveUpdateJob; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [com/example/companybackend/batch/config/DailyAttendanceBatchConfig.class]] with [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=paidLeaveUpdateBatchConfig; factoryMethodName=paidLeaveUpdateJob; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [com/example/companybackend/batch/config/PaidLeaveUpdateBatchConfig.class]]
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobRepository already defined in the application context, skipping the registration of a jobRepository
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobExplorer already defined in the application context, skipping the registration of a jobExplorer
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobLauncher already defined in the application context, skipping the registration of a jobLauncher
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobRegistry already defined in the application context, skipping the registration of a jobRegistry
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobRegistrySmartInitializingSingleton already defined in the application context, skipping the registration of a jobRegistrySmartInitializingSingleton
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Bean jobOperator already defined in the application context, skipping the registration of a jobOperator
+2025-08-02T08:12:27.286+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.c.annotation.BatchRegistrar      : Finished Spring Batch infrastructure beans configuration in 0 ms.
+2025-08-02T08:12:27.586+09:00  INFO 26944 --- [company_backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-08-02T08:12:27.687+09:00  INFO 26944 --- [company_backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 87 ms. Found 14 JPA repository interfaces.
+2025-08-02T08:12:28.269+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8091 (http)
+2025-08-02T08:12:28.271+09:00  INFO 26944 --- [company_backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-08-02T08:12:28.271+09:00  INFO 26944 --- [company_backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.43]
+2025-08-02T08:12:28.337+09:00  INFO 26944 --- [company_backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-08-02T08:12:28.337+09:00  INFO 26944 --- [company_backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1741 ms
+2025-08-02T08:12:28.655+09:00  INFO 26944 --- [company_backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-08-02T08:12:28.738+09:00  INFO 26944 --- [company_backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.22.Final
+2025-08-02T08:12:28.772+09:00  INFO 26944 --- [company_backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-08-02T08:12:29.006+09:00  INFO 26944 --- [company_backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-08-02T08:12:29.039+09:00  INFO 26944 --- [company_backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-08-02T08:12:29.155+09:00  INFO 26944 --- [company_backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@76ed7573
+2025-08-02T08:12:29.155+09:00  INFO 26944 --- [company_backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-08-02T08:12:29.222+09:00  INFO 26944 --- [company_backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 15.13
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-08-02T08:12:30.273+09:00  INFO 26944 --- [company_backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-08-02T08:12:30.339+09:00  INFO 26944 --- [company_backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-08-02T08:12:30.593+09:00  INFO 26944 --- [company_backend] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-08-02T08:12:30.706+09:00 DEBUG 26944 --- [company_backend] [           main] c.e.c.security.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
+2025-08-02T08:12:30.740+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.r.s.JobRepositoryFactoryBean     : No database type set, using meta data indicating: POSTGRES
+2025-08-02T08:12:30.807+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.c.l.s.TaskExecutorJobLauncher      : No TaskExecutor has been set, defaulting to synchronous executor.
+2025-08-02T08:12:30.823+09:00  INFO 26944 --- [company_backend] [           main] c.e.c.batch.util.BatchSettings           : ãƒãƒƒãƒè¨­å®šæ¤œè¨¼å®Œäº† - ãƒãƒ£ãƒ³ã‚¯:1000, ã‚¹ã‚­ãƒƒãƒ—åˆ¶é™:100, ãƒªãƒˆãƒ©ã‚¤åˆ¶é™:3, ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆ:3600ç§’
+2025-08-02T08:12:31.473+09:00  WARN 26944 --- [company_backend] [           main] r$InitializeUserDetailsManagerConfigurer : Found 2 UserDetailsService beans, with names [customUserDetailsService, userDetailsServiceImpl]. Global Authentication Manager will not use a UserDetailsService for username/password login. Consider publishing a single UserDetailsService bean.
+2025-08-02T08:12:31.473+09:00 DEBUG 26944 --- [company_backend] [           main] swordEncoderAuthenticationManagerBuilder : No authenticationProviders and no parentAuthenticationManager defined. Returning null.
+2025-08-02T08:12:31.641+09:00  WARN 26944 --- [company_backend] [           main] o.s.b.c.l.AbstractListenerFactoryBean    : org.springframework.batch.item.ItemReader is an interface. The implementing class will not be queried for annotation based listener configurations. If using @StepScope on a @Bean method, be sure to return the implementing class so listener annotations can be used.
+2025-08-02T08:12:31.641+09:00  WARN 26944 --- [company_backend] [           main] o.s.b.c.l.AbstractListenerFactoryBean    : org.springframework.batch.item.ItemWriter is an interface. The implementing class will not be queried for annotation based listener configurations. If using @StepScope on a @Bean method, be sure to return the implementing class so listener annotations can be used.
+2025-08-02T08:12:31.641+09:00  WARN 26944 --- [company_backend] [           main] o.s.b.c.l.AbstractListenerFactoryBean    : org.springframework.batch.item.ItemProcessor is an interface. The implementing class will not be queried for annotation based listener configurations. If using @StepScope on a @Bean method, be sure to return the implementing class so listener annotations can be used.
+2025-08-02T08:12:31.657+09:00  WARN 26944 --- [company_backend] [           main] o.s.b.c.l.AbstractListenerFactoryBean    : org.springframework.batch.item.ItemReader is an interface. The implementing class will not be queried for annotation based listener configurations. If using @StepScope on a @Bean method, be sure to return the implementing class so listener annotations can be used.
+2025-08-02T08:12:31.657+09:00  WARN 26944 --- [company_backend] [           main] o.s.b.c.l.AbstractListenerFactoryBean    : org.springframework.batch.item.ItemWriter is an interface. The implementing class will not be queried for annotation based listener configurations. If using @StepScope on a @Bean method, be sure to return the implementing class so listener annotations can be used.
+2025-08-02T08:12:31.657+09:00  WARN 26944 --- [company_backend] [           main] o.s.b.c.l.AbstractListenerFactoryBean    : org.springframework.batch.item.ItemProcessor is an interface. The implementing class will not be queried for annotation based listener configurations. If using @StepScope on a @Bean method, be sure to return the implementing class so listener annotations can be used.
+2025-08-02T08:12:31.874+09:00  WARN 26944 --- [company_backend] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-08-02T08:12:32.241+09:00  INFO 26944 --- [company_backend] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2025-08-02T08:12:32.339+09:00 DEBUG 26944 --- [company_backend] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, CorsFilter, LogoutFilter, JwtAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2025-08-02T08:12:32.692+09:00  WARN 26944 --- [company_backend] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2025-08-02T08:12:32.692+09:00  INFO 26944 --- [company_backend] [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-08-02T08:12:32.692+09:00  INFO 26944 --- [company_backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-08-02T08:12:32.692+09:00  INFO 26944 --- [company_backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-08-02T08:12:32.724+09:00  INFO 26944 --- [company_backend] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-08-02T08:12:32.737+09:00 ERROR 26944 --- [company_backend] [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8091 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8091 or configure this application to listen on another port.
+
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  19.469 s
+[INFO] Finished at: 2025-08-02T08:12:32+09:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.4.8:run (default-cli) on project company_backend: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

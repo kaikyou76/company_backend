@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class BatchResponseDto {
-    
+
     @Data
     public static class MonthlySummaryBatchResponse {
         private boolean success;
@@ -25,6 +25,27 @@ public class BatchResponseDto {
         private int totalWorkDays;
         private int totalWorkTime;
         private int totalOvertimeTime;
+    }
+
+    @Data
+    public static class DailySummaryBatchResponse {
+        private boolean success;
+        private String message;
+        private DailySummaryData data;
+        private LocalDateTime executedAt;
+    }
+
+    @Data
+    public static class DailySummaryData {
+        private String targetDate;
+        private int processedCount;
+        private int userCount;
+        private int totalWorkTime;
+        private int totalOvertimeTime;
+        private int totalLateNightTime;
+        private int totalHolidayTime;
+        private double averageWorkHours;
+        private List<String> processingWarnings = new ArrayList<>();
     }
 
     @Data
@@ -67,6 +88,27 @@ public class BatchResponseDto {
         private String message;
         private List<String> repairedItems;
         private LocalDateTime executedAt;
+    }
+
+    @Data
+    public static class OvertimeMonitoringBatchResponse {
+        private boolean success;
+        private String message;
+        private OvertimeMonitoringData data;
+        private LocalDateTime executedAt;
+    }
+
+    @Data
+    public static class OvertimeMonitoringData {
+        private String targetMonth;
+        private int processedCount;
+        private int userCount;
+        private int overtimeReportsGenerated;
+        private int highOvertimeAlerts;
+        private int confirmedReports;
+        private int draftReports;
+        private int approvedReports;
+        private List<String> processingWarnings = new ArrayList<>();
     }
 
     @Data
