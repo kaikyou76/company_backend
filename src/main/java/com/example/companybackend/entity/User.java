@@ -315,8 +315,6 @@ public class User implements UserDetails {
     public String getLocationTypeDisplayName() {
         if ("office".equals(locationType)) {
             return "オフィス勤務";
-        } else if ("remote".equals(locationType)) {
-            return "リモート勤務";
         } else if ("client".equals(locationType)) {
             return "客先勤務";
         } else {

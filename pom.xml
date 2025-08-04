@@ -93,6 +93,12 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
+		<!-- Spring Boot Mail for email notifications -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 		<!-- Spring Cloud Gateway for API Gateway - COMMENTED OUT FOR INTEGRATION TESTS -->
 		<!--
 		<dependency>

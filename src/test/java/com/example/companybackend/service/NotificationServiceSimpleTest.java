@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,13 +44,19 @@ class NotificationServiceSimpleTest {
                 String message = "実データベースのユーザーに対する通知テスト";
                 String type = "system";
 
+                // 确保用户是激活状态
+                if (realUser.getIsActive() == null || !realUser.getIsActive()) {
+                        realUser.setIsActive(true);
+                        userRepository.save(realUser);
+                }
+
                 // When
                 Notification notification = notificationService.createNotification(
                                 realUser.getId().intValue(), title, message, type, null);
 
                 // Then
                 assertNotNull(notification, "通知が作成されること");
-                assertEquals(realUser.getId(), notification.getUserId(), "ユーザーIDが正しいこと");
+                assertEquals(realUser.getId(), Long.valueOf(notification.getUserId()), "ユーザーIDが正しいこと");
                 assertEquals(title, notification.getTitle(), "タイトルが正しいこと");
                 assertEquals(message, notification.getMessage(), "メッセージが正しいこと");
                 assertEquals(type, notification.getType(), "タイプが正しいこと");
@@ -67,6 +74,12 @@ class NotificationServiceSimpleTest {
                 assertFalse(realUsers.isEmpty(), "実データベースにユーザーが存在すること");
 
                 User realUser = realUsers.get(0);
+                
+                // 确保用户是激活状态
+                if (realUser.getIsActive() == null || !realUser.getIsActive()) {
+                        realUser.setIsActive(true);
+                        userRepository.save(realUser);
+                }
 
                 // 通知を作成
                 notificationService.createNotification(
