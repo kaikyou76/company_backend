@@ -1,0 +1,227 @@
+# PathTraversalProtectionTest 测试用例制作流程说明书
+
+## 概要
+本文档详细说明了 [PathTraversalProtectionTest](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java#L13-L77) 测试用例制作中的注解、模拟对象、测试制作流程和技巧。提供了针对路径遍历防护功能的专用测试策略。
+
+## 1. 测试类结构分析
+
+### 1.1 文件位置
+**位置**: [src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java)
+
+### 1.2 基本注解
+
+#### @SpringBootTest
+**行**: 11
+```java
+@SpringBootTest
+public class PathTraversalProtectionTest extends SecurityTestBase {
+```
+
+**目的**:
+- 启动完整的 Spring Boot 应用程序上下文
+- 集成所有安全配置和过滤器
+- 提供真实的 Web 环境进行安全测试
+
+**路径遍历测试特点**:
+- 继承 [SecurityTestBase](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/SecurityTestBase.java#L42-L357) 基类以获得统一的安全测试基础设施
+- 使用 MockMvc 模拟 HTTP 请求
+- 集成 JWT 认证和 CSRF 保护等安全机制
+- 验证系统对路径遍历攻击的检测和阻止能力
+
+### 1.3 核心组件
+
+#### MockMvc 对象
+**来源**: [SecurityTestBase](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/SecurityTestBase.java#L42-L357)
+```java
+@Autowired
+protected MockMvc mockMvc;
+```
+
+**作用**:
+- 模拟 HTTP 请求，无需启动实际服务器
+- 发送包含路径遍历攻击模式的请求
+- 验证系统响应是否正确阻止攻击
+
+**测试方法**:
+```java
+// 主要测试方法
+mockMvc.perform(post("/api/test")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(maliciousPayload))
+        .andExpect(status().is4xxClientError());
+```
+
+#### PathTraversalAttackPatternFactory
+**行**: 15, 31, 45, 59
+```java
+String pathTraversalPattern = PathTraversalAttackPatternFactory.getRandomPattern();
+```
+
+**作用**:
+- 提供常见的路径遍历攻击模式
+- 包含相对路径遍历和绝对路径遍历等模式
+- 支持随机模式和全部模式测试
+
+**攻击模式示例**:
+```java
+// 常见的路径遍历攻击模式
+"../../../etc/passwd",
+"..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
+"/etc/passwd",
+"../../../../../../../../etc/passwd%00"
+```
+
+### 1.4 测试常量
+
+#### 安全测试类型
+**行**: 15
+```java
+@Override
+protected String getSecurityTestType() {
+    return "PATH_TRAVERSAL_PROTECTION";
+}
+```
+
+**作用**:
+- 标识测试类型为路径遍历防护
+- 用于日志记录和测试报告分类
+- 与安全测试基础设施集成
+
+## 2. 测试用例详解
+
+### 2.1 请求体中的路径遍历测试
+**方法**: [testPathTraversalInRequestBody()](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java#L21-L33)
+
+**目的**:
+- 验证系统能否检测并阻止在请求体中的路径遍历攻击
+- 测试 JSON 格式数据的防护能力
+
+**测试步骤**:
+1. 从 [PathTraversalAttackPatternFactory](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalAttackPatternFactory.java#L9-L52) 获取随机路径遍历模式
+2. 构造包含恶意代码的 JSON 请求体
+3. 使用 MockMvc 发送 POST 请求
+4. 验证系统返回 4xx 客户端错误而非 200 成功响应
+
+**代码示例**:
+```java
+@Test
+public void testPathTraversalInRequestBody() throws Exception {
+    String pathTraversalPattern = PathTraversalAttackPatternFactory.getRandomPattern();
+    
+    String maliciousPayload = "{\"filename\": \"" + pathTraversalPattern + "\"}";
+
+    ResultActions result = mockMvc.perform(post("/api/test")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(maliciousPayload));
+
+    // 预期应该返回400或403错误，而不是200
+    result.andExpect(status().is4xxClientError());
+}
+```
+
+### 2.2 查询字符串中的路径遍历测试
+**方法**: [testPathTraversalInQueryString()](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java#L35-L43)
+
+**目的**:
+- 验证系统能否检测并阻止在查询字符串中的路径遍历攻击
+- 测试 URL 参数的防护能力
+
+**测试步骤**:
+1. 从 [PathTraversalAttackPatternFactory](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalAttackPatternFactory.java#L9-L52) 获取随机路径遍历模式
+2. 构造包含恶意代码的查询字符串参数
+3. 使用 MockMvc 发送带参数的 POST 请求
+4. 验证系统返回 4xx 客户端错误而非 200 成功响应
+
+**代码示例**:
+```java
+@Test
+public void testPathTraversalInQueryString() throws Exception {
+    String pathTraversalPattern = PathTraversalAttackPatternFactory.getRandomPattern();
+
+    ResultActions result = mockMvc.perform(post("/api/test?file=" + pathTraversalPattern));
+
+    // 预期应该返回400或403错误，而不是200
+    result.andExpect(status().is4xxClientError());
+}
+```
+
+### 2.3 表单数据中的路径遍历测试
+**方法**: [testPathTraversalInFormData()](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java#L45-L55)
+
+**目的**:
+- 验证系统能否检测并阻止在表单数据中的路径遍历攻击
+- 测试 application/x-www-form-urlencoded 格式数据的防护能力
+
+**测试步骤**:
+1. 从 [PathTraversalAttackPatternFactory](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalAttackPatternFactory.java#L9-L52) 获取随机路径遍历模式
+2. 构造包含恶意代码的表单参数
+3. 使用 MockMvc 发送带表单数据的 POST 请求
+4. 验证系统返回 4xx 客户端错误而非 200 成功响应
+
+**代码示例**:
+```java
+@Test
+public void testPathTraversalInFormData() throws Exception {
+    String pathTraversalPattern = PathTraversalAttackPatternFactory.getRandomPattern();
+
+    ResultActions result = mockMvc.perform(post("/api/test")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .param("file", pathTraversalPattern));
+
+    // 预期应该返回400或403错误，而不是200
+    result.andExpect(status().is4xxClientError());
+}
+```
+
+### 2.4 所有路径遍历模式测试
+**方法**: [testAllPathTraversalPatterns()](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java#L57-L70)
+
+**目的**:
+- 验证系统能否检测并阻止所有已知的路径遍历攻击模式
+- 确保防护机制覆盖所有常见攻击向量
+
+**测试步骤**:
+1. 遍历 [PathTraversalAttackPatternFactory](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalAttackPatternFactory.java#L9-L52) 中的所有路径遍历模式
+2. 对每个模式构造包含恶意代码的 JSON 请求体
+3. 使用 MockMvc 发送 POST 请求
+4. 验证系统对每个模式都返回 4xx 客户端错误
+
+**代码示例**:
+```java
+@Test
+public void testAllPathTraversalPatterns() throws Exception {
+    for (String pattern : PathTraversalAttackPatternFactory.getAllPatterns()) {
+        String maliciousPayload = "{\"filename\": \"" + pattern + "\"}";
+
+        ResultActions result = mockMvc.perform(post("/api/test")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(maliciousPayload));
+
+        // 预期应该返回400或403错误，而不是200
+        result.andExpect(status().is4xxClientError());
+    }
+}
+```
+
+## 3. 测试技巧与注意事项
+
+### 3.1 测试环境配置
+- 确保继承 [SecurityTestBase](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/SecurityTestBase.java#L42-L357) 以获得统一的安全测试基础设施
+- 使用 [@SpringBootTest](file:///F:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalProtectionTest.java#L11-L12) 注解启动完整的应用程序上下文
+- 配置测试专用的 Spring Profile（如 security-test）
+
+### 3.2 攻击模式选择
+- 使用 [PathTraversalAttackPatternFactory](file:///f:/Company_system_project/company_backend/src/test/java/com/example/companybackend/security/test/sql/PathTraversalAttackPatternFactory.java#L9-L52) 提供的标准化攻击模式
+- 定期更新攻击模式以覆盖新发现的攻击向量
+- 结合随机模式测试和全模式测试确保覆盖率
+
+### 3.3 预期结果验证
+- 验证系统返回 4xx 客户端错误而非 200 成功响应
+- 检查错误日志以确认攻击被正确检测和记录
+- 验证系统文件未被恶意路径访问
+
+### 3.4 测试扩展建议
+- 增加对不同 HTTP 方法（GET、PUT、DELETE 等）的测试
+- 添加对多参数、嵌套 JSON 结构的测试
+- 测试编码后的路径遍历攻击（如 URL 编码、Unicode 编码等）
+- 集成实际业务 API 端点进行端到端测试，特别是文件上传和下载功能
