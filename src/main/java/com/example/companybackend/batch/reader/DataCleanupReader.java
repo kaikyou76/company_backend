@@ -2,7 +2,8 @@ package com.example.companybackend.batch.reader;
 
 import com.example.companybackend.entity.SystemLog;
 import com.example.companybackend.repository.SystemLogRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.database.JdbcPagingItemReader;
 import org.springframework.batch.item.database.Order;
@@ -18,8 +19,9 @@ import java.util.Map;
  * データクリーンアップ用リーダー
  * 古いシステムログデータを読み込む
  */
-@Slf4j
 public class DataCleanupReader {
+
+    private static final Logger log = LoggerFactory.getLogger(DataCleanupReader.class);
 
     private final SystemLogRepository systemLogRepository;
     private final DataSource dataSource;

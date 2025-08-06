@@ -4,9 +4,10 @@
 
 ## 当前状态
 
-邮件通知功能已暂时禁用，相关配置如下：
+[text](src/test/java/com/example/companybackend/service/AttendanceServiceLocationTest.java.tmp.5416.1754047223796)邮件通知功能已暂时禁用，相关配置如下：
 
 1. 在生产环境配置文件 `src/main/resources/application-prod.properties` 中：
+
    ```properties
    # 邮件通知的启用标志设置为 false
    app.notification.email.enabled=false
@@ -16,16 +17,17 @@
    ```properties
    # 邮件服务器配置（预置但未激活）
    spring.mail.host=smtp.gmail.com
-spring.mail.port=587
-spring.mail.username=your-email@gmail.com
-spring.mail.password=your-password
-spring.mail.properties.mail.smtp.auth=true
-spring.mail.properties.mail.smtp.starttls.enable=true
+   spring.mail.port=587
+   spring.mail.username=your-email@gmail.com
+   spring.mail.password=your-password
+   spring.mail.properties.mail.smtp.auth=true
+   spring.mail.properties.mail.smtp.starttls.enable=true
    ```
 
 ## 相关代码文件
 
 1. 邮件通知服务类：
+
    - 文件路径：`src/main/java/com/example/companybackend/service/EmailNotificationService.java`
    - 功能：负责发送邮件通知和保存通知记录
    - 关键特性：检查 `app.notification.email.enabled` 配置决定是否发送邮件
@@ -64,10 +66,11 @@ app.notification.email.enabled=true
 ## 故障排除
 
 1. 如果邮件发送失败，请检查：
+
    - 邮件服务器地址和端口是否正确
    - 用户名和密码是否正确
    - 防火墙是否允许出站邮件连接
-   - 邮件服务器是否需要特殊的安全设置（如OAuth2）
+   - 邮件服务器是否需要特殊的安全设置（如 OAuth2）
 
 2. 如果应用启动失败，请检查：
    - 配置文件格式是否正确

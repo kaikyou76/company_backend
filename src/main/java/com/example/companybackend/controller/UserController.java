@@ -2,6 +2,8 @@ package com.example.companybackend.controller;
 
 import com.example.companybackend.entity.User;
 import com.example.companybackend.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,16 +11,25 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * ユーザー関連コントローラー
+ * ユーザー情報の取得、作成、更新などを行う
+ */
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
+@Tag(name = "ユーザー", description = "ユーザー管理API")
 public class UserController {
 
     private final UserService userService;
+    
+    // 创建StringEscapeUtils实例用于HTML转义
+    private static final StringEscapeUtils stringEscapeUtils = new StringEscapeUtils();
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -54,7 +65,7 @@ public class UserController {
     }
 
     /**
-     * 更新当前用户信息
+     * 更新当前用户情報
      */
     @PutMapping("/profile")
     public ResponseEntity<?> updateCurrentUser(@RequestBody Map<String, Object> updateRequest) {
@@ -76,9 +87,9 @@ public class UserController {
             
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("id", user.getId());
-            responseData.put("name", user.getFullName());
-            responseData.put("email", user.getEmail());
-            responseData.put("phoneNumber", user.getPhone());
+            responseData.put("name", escapeHtml(user.getFullName()));
+            responseData.put("email", user.getEmail()); // Email通常不需要转義，因为它有特定格式
+            responseData.put("phoneNumber", escapeHtml(user.getPhone()));
             responseData.put("updatedAt", user.getUpdatedAt());
             
             Map<String, Object> response = new HashMap<>();
@@ -234,7 +245,7 @@ public class UserController {
                         .body(createErrorResponse("勤務場所タイプは必須です"));
             }
             
-            // location_type的验证 (officeまたはclient)
+            // location_typeの验证 (officeまたはclient)
             if (!"office".equals(user.getLocationType()) && !"client".equals(user.getLocationType())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("勤務場所タイプは 'office' または 'client' である必要があります"));
@@ -247,7 +258,7 @@ public class UserController {
                         .body(createErrorResponse("クライアント勤務地の緯度と経度は両方設定するか、両方nullにする必要があります"));
                 }
             } else {
-                // office的場合は緯度経度をnullに設定
+                // officeの場合は緯度経度をnullに設定
                 user.setClientLatitude(null);
                 user.setClientLongitude(null);
             }
@@ -376,7 +387,7 @@ public class UserController {
         profile.put("hireDate", user.getHireDate());
         profile.put("phoneNumber", user.getPhone());
         // API规范中包含remainingPaidLeave，但User实体中没有该字段
-        profile.put("remainingPaidLeave", 0); // 临时值，实际应该从其他表获取
+        profile.put("remainingPaidLeave", 0); // 临时値，实际应该从其他表获取
         return profile;
     }
 
@@ -406,5 +417,17 @@ public class UserController {
         error.put("success", false);
         error.put("message", message);
         return error;
+    }
+    
+    /**
+     * 对字符串进行HTML转义以防止XSS攻击
+     * @param input 输入字符串
+     * @return 转義後の字符串
+     */
+    private String escapeHtml(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        return StringEscapeUtils.escapeHtml4(input);
     }
 }

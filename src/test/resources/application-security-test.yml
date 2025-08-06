@@ -1,0 +1,112 @@
+# セキュリティテスト専用設定
+spring:
+  # PostgreSQL Test Database (既存設定を活用)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/comsys_test
+    username: postgres
+    password: AM2013japan
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+
+  # JPA/Hibernate Settings (本番環境と同一)
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false  # セキュリティテスト時はログを抑制
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+          time_zone: Asia/Tokyo
+        boot:
+          allow_jdbc_metadata_access: true
+
+  # SQL初期化設定
+  sql:
+    init:
+      mode: never
+
+# JWT Configuration for Security Testing (短縮有効期限)
+app:
+  jwt:
+    secret: security-test-jwt-secret-key-for-company-backend-system-at-least-32-chars-long
+    expiration: 300000      # 5分 (テスト用短縮)
+    refresh-expiration: 600000  # 10分 (テスト用短縮)
+  # CORS設定 (テスト用)
+  security:
+    allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:8082
+    max-age: 3600
+    # CSRF保護設定（テスト環境）
+    csrf:
+      enabled: true
+      monitoring-mode: true
+      warning-mode: true
+      origin-validation-enabled: true
+      allowed-origins: http://localhost:3000,http://localhost:3001,http://localhost:8082
+      excluded-paths: /api/auth/**,/actuator/**,/api/public/**
+      protected-methods: POST,PUT,DELETE,PATCH
+
+# Security Test Specific Configuration
+security:
+  test:
+    enabled: true
+    # レート制限設定 (テスト用低制限値)
+    rate-limit:
+      enabled: true
+      requests-per-minute: 10
+      requests-per-hour: 100
+      burst-capacity: 5
+    
+    # CSRF設定
+    csrf:
+      enabled: true
+      token-validity: 300000  # 5分
+    
+    # XSS保護設定
+    xss:
+      enabled: true
+      strict-mode: true
+    
+    # SQLインジェクション保護設定
+    sql-injection:
+      enabled: true
+      strict-validation: true
+
+# Test Server Configuration
+server:
+  port: 8082  # セキュリティテスト専用ポート
+
+# Logging Configuration for Security Testing
+logging:
+  level:
+    com.example.companybackend.security: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    # セキュリティテスト専用ログ
+    com.example.companybackend.security.test: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [SECURITY-TEST] %logger{36} - %msg%n"
+
+# Actuator設定 (セキュリティテスト用)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,security
+  endpoint:
+    health:
+      show-details: always
+    security:
+      enabled: true
+
+# Test Database Configuration
+spring.test.database.replace: none

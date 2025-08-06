@@ -2,7 +2,8 @@ package com.example.companybackend.batch.processor;
 
 import com.example.companybackend.entity.SystemLog;
 import com.example.companybackend.repository.SystemLogRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import java.time.LocalDate;
@@ -12,8 +13,9 @@ import java.time.OffsetDateTime;
  * データクリーンアップ処理プロセッサー
  * 古いシステムログデータを削除対象として識別する
  */
-@Slf4j
 public class DataCleanupProcessor implements ItemProcessor<SystemLog, SystemLog> {
+
+    private static final Logger log = LoggerFactory.getLogger(DataCleanupProcessor.class);
 
     private SystemLogRepository systemLogRepository;
 

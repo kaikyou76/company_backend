@@ -2,6 +2,8 @@ package com.example.companybackend.service;
 
 import com.example.companybackend.entity.User;
 import com.example.companybackend.repository.UserRepository;
+import com.example.companybackend.security.HtmlSanitizerService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private HtmlSanitizerService htmlSanitizerService;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -35,13 +40,17 @@ public class UserService {
 
     public void updateUserProfile(User user, Map<String, Object> updateRequest) {
         if (updateRequest.containsKey("fullName")) {
-            user.setFullName((String) updateRequest.get("fullName"));
+            String fullName = (String) updateRequest.get("fullName");
+            // 清理输入数据，防止XSS攻击
+            user.setFullName(htmlSanitizerService.sanitizeHtml(fullName));
         }
         if (updateRequest.containsKey("email")) {
             user.setEmail((String) updateRequest.get("email"));
         }
         if (updateRequest.containsKey("phone")) {
-            user.setPhone((String) updateRequest.get("phone"));
+            String phone = (String) updateRequest.get("phone");
+            // 清理输入数据，防止XSS攻击
+            user.setPhone(htmlSanitizerService.sanitizeHtml(phone));
         }
         user.setUpdatedAt(OffsetDateTime.now());
         userRepository.save(user);

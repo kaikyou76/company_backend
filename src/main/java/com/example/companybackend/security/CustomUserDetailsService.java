@@ -3,7 +3,8 @@ package com.example.companybackend.security;
 import com.example.companybackend.entity.User;
 import com.example.companybackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,14 +23,14 @@ import java.util.Collections;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
 
-    
+    private static final Logger log = LoggerFactory.getLogger(CustomUserDetailsService.class);
     private final UserRepository userRepository;
 
     /**
      * ユーザー名でユーザー詳細を読み込み
+     * 
      * @param username ユーザー名（email）
      * @return UserDetails
      * @throws UsernameNotFoundException ユーザーが見つからない場合
@@ -38,7 +39,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Loading user by username: {}", username);
-        
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("User not found with username: {}", username);
@@ -51,6 +52,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     /**
      * ユーザーIDでユーザー詳細を読み込み
+     * 
      * @param userId ユーザーID
      * @return UserDetails
      * @throws UsernameNotFoundException ユーザーが見つからない場合
@@ -58,7 +60,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserById(Long userId) throws UsernameNotFoundException {
         log.debug("Loading user by ID: {}", userId);
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("User not found with ID: {}", userId);
@@ -71,12 +73,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     /**
      * UserPrincipal作成
+     * 
      * @param user ユーザーエンティティ
      * @return UserDetails
      */
     private UserDetails createUserPrincipal(User user) {
         Collection<GrantedAuthority> authorities = getAuthorities(user);
-        
+
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPasswordHash())
@@ -90,6 +93,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     /**
      * ユーザー権限取得
+     * 
      * @param user ユーザーエンティティ
      * @return 権限リスト
      */

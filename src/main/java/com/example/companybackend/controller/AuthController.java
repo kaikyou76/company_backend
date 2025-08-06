@@ -141,7 +141,16 @@ public class AuthController {
         logger.info("ログアウトリクエスト受信");
         
         try {
-            // TODO: トークン無効化処理の実装
+            // AuthorizationヘッダーからBearerトークンを抽出
+            String token = null;
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                token = authorizationHeader.substring(7);
+            }
+
+            // TODO: 実際のプロジェクトでは、トークンをブラックリストに追加するなどの
+            // トークン無効化処理を実装する必要があります
+            // 例: Redisにトークンを保存し、有効期限まで保持するなど
+            
             LogoutResponse response = LogoutResponse.success();
             return ResponseEntity.ok(response);
             

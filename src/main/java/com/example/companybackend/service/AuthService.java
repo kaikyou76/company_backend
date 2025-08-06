@@ -277,6 +277,13 @@ public class AuthService {
     }
     
     /**
+     * トークンの検証
+     */
+    public boolean validateToken(String token) {
+        return tokenProvider.validateToken(token);
+    }
+    
+    /**
      * 安全なdouble変換
      */
     private Double parseDoubleSafely(String value, String line) {

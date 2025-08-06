@@ -2,7 +2,8 @@ package com.example.companybackend.batch.writer;
 
 import com.example.companybackend.entity.SystemLog;
 import com.example.companybackend.repository.SystemLogRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,10 @@ import java.util.stream.Collectors;
  * データクリーンアップ用ライター
  * 古いシステムログデータを削除する
  */
-@Slf4j
 @Component
 public class DataCleanupWriter implements ItemWriter<SystemLog> {
+
+    private static final Logger log = LoggerFactory.getLogger(DataCleanupWriter.class);
 
     @Autowired
     private SystemLogRepository systemLogRepository;

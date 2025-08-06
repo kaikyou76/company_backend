@@ -1,6 +1,5 @@
 package com.example.companybackend.batch.util;
 
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,18 +16,18 @@ import java.util.concurrent.atomic.AtomicLong;
  * バッチ処理中のエラー情報をファイル出力・管理
  */
 @Component
-@Slf4j
 public class ErrorFileManager {
 
-    
+    private static final Logger log = LoggerFactory.getLogger(ErrorFileManager.class);
+
     private final String errorDir;
     private final String errorPrefix;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     private final AtomicLong errorSequence = new AtomicLong(0);
 
     // 修改构造函数，使用@Value注解から配置ファイル获取パラメータ
-    public ErrorFileManager(@Value("${batch.error.dir:/tmp/batch/errors}") String errorDir, 
-                           @Value("${batch.error.prefix:BATCH_ERR_}") String errorPrefix) {
+    public ErrorFileManager(@Value("${batch.error.dir:/tmp/batch/errors}") String errorDir,
+            @Value("${batch.error.prefix:BATCH_ERR_}") String errorPrefix) {
         this.errorDir = errorDir;
         this.errorPrefix = errorPrefix;
         initializeErrorDirectory();
@@ -53,8 +52,8 @@ public class ErrorFileManager {
     /**
      * エラー情報をファイル出力
      */
-    public String writeErrorToFile(String stepName, String errorType, String errorMessage, 
-                                 String stackTrace, Object problematicData) {
+    public String writeErrorToFile(String stepName, String errorType, String errorMessage,
+            String stackTrace, Object problematicData) {
         try {
             String fileName = generateErrorFileName(stepName, errorType);
             Path filePath = Paths.get(errorDir, fileName);
@@ -71,10 +70,10 @@ public class ErrorFileManager {
             errorContent.append("\n=== スタックトレース ===\n");
             errorContent.append(stackTrace != null ? stackTrace : "N/A").append("\n");
 
-            Files.write(filePath, errorContent.toString().getBytes(), 
-                       StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.write(filePath, errorContent.toString().getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
-            log.warn("エラー情報をファイルに出力しました: {} (Step: {}, Type: {})", 
+            log.warn("エラー情報をファイルに出力しました: {} (Step: {}, Type: {})",
                     fileName, stepName, errorType);
 
             return fileName;
@@ -94,7 +93,7 @@ public class ErrorFileManager {
             Path filePath = Paths.get(errorDir, fileName);
 
             StringBuilder csvContent = new StringBuilder();
-            
+
             // ヘッダー行（ファイルが新規の場合のみ）
             if (!Files.exists(filePath)) {
                 csvContent.append("ERROR_TIMESTAMP,STEP_NAME,SEQUENCE,");
@@ -108,17 +107,18 @@ public class ErrorFileManager {
             csvContent.append(LocalDateTime.now().format(dateFormatter)).append(",");
             csvContent.append(stepName).append(",");
             csvContent.append(errorSequence.incrementAndGet()).append(",");
-            
+
             if (errorData != null) {
                 for (int i = 0; i < errorData.length; i++) {
-                    if (i > 0) csvContent.append(",");
+                    if (i > 0)
+                        csvContent.append(",");
                     csvContent.append(errorData[i] != null ? errorData[i].toString() : "");
                 }
             }
             csvContent.append("\n");
 
-            Files.write(filePath, csvContent.toString().getBytes(), 
-                       StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.write(filePath, csvContent.toString().getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 
             log.warn("CSVエラーデータを出力しました: {} (Step: {})", fileName, stepName);
             return fileName;
@@ -132,8 +132,8 @@ public class ErrorFileManager {
     /**
      * 集約エラーレポート出力
      */
-    public String writeAggregatedErrorReport(String jobName, int totalErrors, 
-                                           java.util.Map<String, Integer> errorsByStep) {
+    public String writeAggregatedErrorReport(String jobName, int totalErrors,
+            java.util.Map<String, Integer> errorsByStep) {
         try {
             String fileName = generateErrorFileName(jobName, "SUMMARY");
             Path filePath = Paths.get(errorDir, fileName);
@@ -145,8 +145,8 @@ public class ErrorFileManager {
             reportContent.append("総エラー数: ").append(totalErrors).append("\n");
             reportContent.append("\n=== ステップ別エラー数 ===\n");
 
-            errorsByStep.forEach((stepName, errorCount) -> 
-                reportContent.append(stepName).append(": ").append(errorCount).append(" errors\n"));
+            errorsByStep.forEach((stepName, errorCount) -> reportContent.append(stepName).append(": ")
+                    .append(errorCount).append(" errors\n"));
 
             reportContent.append("\n=== 推奨対応 ===\n");
             if (totalErrors > 1000) {
@@ -158,8 +158,8 @@ public class ErrorFileManager {
                 reportContent.append("- 軽微なエラー：個別対応で対処可能です\n");
             }
 
-            Files.write(filePath, reportContent.toString().getBytes(), 
-                       StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(filePath, reportContent.toString().getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
             log.info("集約エラーレポートを出力しました: {} (総エラー数: {})", fileName, totalErrors);
             return fileName;
@@ -175,8 +175,8 @@ public class ErrorFileManager {
      */
     private String generateErrorFileName(String stepName, String errorType) {
         String timestamp = LocalDateTime.now().format(dateFormatter);
-        return String.format("%s_%s_%s_%s.txt", 
-                           errorPrefix, stepName, errorType, timestamp);
+        return String.format("%s_%s_%s_%s.txt",
+                errorPrefix, stepName, errorType, timestamp);
     }
 
     /**
@@ -185,29 +185,30 @@ public class ErrorFileManager {
     public void cleanupOldErrorFiles(int retentionDays) {
         try {
             Path dirPath = Paths.get(errorDir);
-            if (!Files.exists(dirPath)) return;
+            if (!Files.exists(dirPath))
+                return;
 
             LocalDateTime cutoffDate = LocalDateTime.now().minusDays(retentionDays);
-            
+
             Files.list(dirPath)
-                .filter(path -> path.toString().startsWith(errorPrefix))
-                .filter(path -> {
-                    try {
-                        return Files.getLastModifiedTime(path)
-                                   .toInstant()
-                                   .isBefore(cutoffDate.atZone(java.time.ZoneId.systemDefault()).toInstant());
-                    } catch (IOException e) {
-                        return false;
-                    }
-                })
-                .forEach(path -> {
-                    try {
-                        Files.delete(path);
-                        log.info("古いエラーファイルを削除しました: {}", path.getFileName());
-                    } catch (IOException e) {
-                        log.warn("エラーファイル削除に失敗しました: {}", path.getFileName(), e);
-                    }
-                });
+                    .filter(path -> path.toString().startsWith(errorPrefix))
+                    .filter(path -> {
+                        try {
+                            return Files.getLastModifiedTime(path)
+                                    .toInstant()
+                                    .isBefore(cutoffDate.atZone(java.time.ZoneId.systemDefault()).toInstant());
+                        } catch (IOException e) {
+                            return false;
+                        }
+                    })
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                            log.info("古いエラーファイルを削除しました: {}", path.getFileName());
+                        } catch (IOException e) {
+                            log.warn("エラーファイル削除に失敗しました: {}", path.getFileName(), e);
+                        }
+                    });
 
         } catch (IOException e) {
             log.error("エラーファイルクリーンアップに失敗しました", e);
@@ -219,7 +220,7 @@ public class ErrorFileManager {
      */
     public java.util.Map<String, Object> getErrorFileStatistics() {
         java.util.Map<String, Object> stats = new java.util.HashMap<>();
-        
+
         try {
             Path dirPath = Paths.get(errorDir);
             if (!Files.exists(dirPath)) {
@@ -229,18 +230,18 @@ public class ErrorFileManager {
             }
 
             java.util.List<Path> errorFiles = Files.list(dirPath)
-                .filter(path -> path.toString().contains(errorPrefix))
-                .collect(java.util.stream.Collectors.toList());
+                    .filter(path -> path.toString().contains(errorPrefix))
+                    .collect(java.util.stream.Collectors.toList());
 
             long totalSize = errorFiles.stream()
-                .mapToLong(path -> {
-                    try {
-                        return Files.size(path);
-                    } catch (IOException e) {
-                        return 0L;
-                    }
-                })
-                .sum();
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .sum();
 
             stats.put("totalFiles", errorFiles.size());
             stats.put("totalSize", totalSize);

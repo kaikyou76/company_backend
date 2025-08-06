@@ -9,7 +9,8 @@ import com.example.companybackend.repository.AttendanceSummaryRepository;
 import com.example.companybackend.repository.UserRepository;
 import com.example.companybackend.repository.WorkLocationRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.constraints.NotNull;
@@ -38,9 +39,9 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AttendanceService {
 
+    private static final Logger log = LoggerFactory.getLogger(AttendanceService.class);
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final AttendanceSummaryRepository attendanceSummaryRepository;
     private final UserRepository userRepository;
@@ -48,11 +49,12 @@ public class AttendanceService {
 
     /**
      * 出勤打刻
-     * @param userId ユーザーID
-     * @param latitude 緯度
+     * 
+     * @param userId    ユーザーID
+     * @param latitude  緯度
      * @param longitude 経度
      * @return 打刻記録
-     * @throws IllegalStateException 既に出勤済み、重複打刻の場合
+     * @throws IllegalStateException    既に出勤済み、重複打刻の場合
      * @throws IllegalArgumentException 位置情報が無効な場合
      */
     public AttendanceRecord clockIn(Integer userId, Double latitude, Double longitude) {
@@ -60,7 +62,7 @@ public class AttendanceService {
 
         // ユーザー存在確認
         User user = userRepository.findById(userId.longValue())
-            .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません: " + userId));
 
         // 位置情報検証
         validateLocation(user, latitude, longitude);
@@ -70,8 +72,8 @@ public class AttendanceService {
 
         // 既に出勤済みチェック
         boolean alreadyClockedIn = todayRecords.stream()
-            .anyMatch(record -> "in".equals(record.getType()));
-        
+                .anyMatch(record -> "in".equals(record.getType()));
+
         if (alreadyClockedIn) {
             throw new IllegalStateException("既に出勤打刻済みです");
         }
@@ -79,8 +81,8 @@ public class AttendanceService {
         // 重複打刻防止（5分以内の同一種別打刻をチェック）
         OffsetDateTime fiveMinutesAgo = OffsetDateTime.now().minusMinutes(5);
         List<AttendanceRecord> recentRecords = attendanceRecordRepository
-            .findRecentRecordsByUserIdAndType(userId, "in", fiveMinutesAgo);
-        
+                .findRecentRecordsByUserIdAndType(userId, "in", fiveMinutesAgo);
+
         if (!recentRecords.isEmpty()) {
             throw new IllegalStateException("5分以内に重複する出勤打刻があります");
         }
@@ -101,8 +103,9 @@ public class AttendanceService {
 
     /**
      * 出勤打刻（リクエストオブジェクト版）
+     * 
      * @param request 出勤打刻リクエスト
-     * @param userId ユーザーID
+     * @param userId  ユーザーID
      * @return 出勤打刻レスポンス
      */
     public ClockInResponse clockIn(ClockInRequest request, Long userId) {
@@ -121,11 +124,12 @@ public class AttendanceService {
 
     /**
      * 退勤打刻
-     * @param userId ユーザーID
-     * @param latitude 緯度
+     * 
+     * @param userId    ユーザーID
+     * @param latitude  緯度
      * @param longitude 経度
      * @return 打刻記録
-     * @throws IllegalStateException 出勤していない、重複打刻の場合
+     * @throws IllegalStateException    出勤していない、重複打刻の場合
      * @throws IllegalArgumentException 位置情報が無効な場合
      */
     public AttendanceRecord clockOut(Integer userId, Double latitude, Double longitude) {
@@ -133,7 +137,7 @@ public class AttendanceService {
 
         // ユーザー存在確認
         User user = userRepository.findById(userId.longValue())
-            .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("ユーザーが見つかりません: " + userId));
 
         // 位置情報検証
         validateLocation(user, latitude, longitude);
@@ -143,16 +147,16 @@ public class AttendanceService {
 
         // 出勤済みチェック
         boolean clockedIn = todayRecords.stream()
-            .anyMatch(record -> "in".equals(record.getType()));
-        
+                .anyMatch(record -> "in".equals(record.getType()));
+
         if (!clockedIn) {
             throw new IllegalStateException("出勤打刻がありません");
         }
 
         // 既に退勤済みチェック
         boolean alreadyClockedOut = todayRecords.stream()
-            .anyMatch(record -> "out".equals(record.getType()));
-        
+                .anyMatch(record -> "out".equals(record.getType()));
+
         if (alreadyClockedOut) {
             throw new IllegalStateException("既に退勤打刻済みです");
         }
@@ -160,8 +164,8 @@ public class AttendanceService {
         // 重複打刻防止（5分以内の同一種別打刻をチェック）
         OffsetDateTime fiveMinutesAgo = OffsetDateTime.now().minusMinutes(5);
         List<AttendanceRecord> recentRecords = attendanceRecordRepository
-            .findRecentRecordsByUserIdAndType(userId, "out", fiveMinutesAgo);
-        
+                .findRecentRecordsByUserIdAndType(userId, "out", fiveMinutesAgo);
+
         if (!recentRecords.isEmpty()) {
             throw new IllegalStateException("5分以内に重複する退勤打刻があります");
         }
@@ -186,8 +190,9 @@ public class AttendanceService {
 
     /**
      * 退勤打刻（リクエストオブジェクト版）
+     * 
      * @param request 退勤打刻リクエスト
-     * @param userId ユーザーID
+     * @param userId  ユーザーID
      * @return 退勤打刻レスポンス
      */
     public ClockOutResponse clockOut(ClockOutRequest request, Long userId) {
@@ -208,8 +213,9 @@ public class AttendanceService {
      * 位置情報検証
      * オフィス勤務者は100m以内、客先勤務者は500m以内制限
      * skip_location_checkがtrueの場合は検証をスキップ
-     * @param user ユーザー
-     * @param latitude 緯度
+     * 
+     * @param user      ユーザー
+     * @param latitude  緯度
      * @param longitude 経度
      * @throws IllegalArgumentException 位置情報が無効な場合
      */
@@ -232,19 +238,17 @@ public class AttendanceService {
         // オフィス勤務者の場合、オフィス座標との距離検証（100m以内）
         if ("office".equals(user.getLocationType())) {
             List<WorkLocation> officeLocations = workLocationRepository.findByType("office");
-            boolean valid = officeLocations.stream().anyMatch(location -> 
-                calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude()) <= location.getRadius()
-            );
+            boolean valid = officeLocations.stream().anyMatch(location -> calculateDistance(latitude, longitude,
+                    location.getLatitude(), location.getLongitude()) <= location.getRadius());
             if (!valid) {
                 throw new IllegalArgumentException("オフィスから100m以上離れた場所での打刻はできません");
             }
-        } 
+        }
         // 客先勤務者の場合、個別設定された緯度経度と照合
         else if ("client".equals(user.getLocationType())) {
             List<WorkLocation> clientLocations = workLocationRepository.findByType("client");
-            boolean valid = clientLocations.stream().anyMatch(location -> 
-                calculateDistance(latitude, longitude, location.getLatitude(), location.getLongitude()) <= location.getRadius()
-            );
+            boolean valid = clientLocations.stream().anyMatch(location -> calculateDistance(latitude, longitude,
+                    location.getLatitude(), location.getLongitude()) <= location.getRadius());
             if (!valid) {
                 throw new IllegalArgumentException("指定された客先から500m以上離れた場所での打刻はできません");
             }
@@ -253,6 +257,7 @@ public class AttendanceService {
 
     /**
      * ハバーサイン公式による距離計算
+     * 
      * @param lat1 緯度1
      * @param lon1 経度1
      * @param lat2 緯度2
@@ -261,23 +266,24 @@ public class AttendanceService {
      */
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371000; // 地球の半径（メートル）
-        
+
         double lat1Rad = Math.toRadians(lat1);
         double lat2Rad = Math.toRadians(lat2);
         double deltaLatRad = Math.toRadians(lat2 - lat1);
         double deltaLonRad = Math.toRadians(lon2 - lon1);
-        
+
         double a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
-                   Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-                   Math.sin(deltaLonRad / 2) * Math.sin(deltaLonRad / 2);
-        
+                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                        Math.sin(deltaLonRad / 2) * Math.sin(deltaLonRad / 2);
+
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return R * c;
     }
 
     /**
      * 今日の勤怠状況取得
+     * 
      * @param userId ユーザーID
      * @return 今日の勤怠記録リスト
      */
@@ -288,8 +294,9 @@ public class AttendanceService {
 
     /**
      * 指定日の勤怠記録取得
+     * 
      * @param userId ユーザーID
-     * @param date 対象日
+     * @param date   対象日
      * @return 勤怠記録リスト
      */
     @Transactional(readOnly = true)
@@ -299,21 +306,24 @@ public class AttendanceService {
 
     /**
      * 期間内の勤怠記録取得
-     * @param userId ユーザーID
+     * 
+     * @param userId    ユーザーID
      * @param startDate 開始日時
-     * @param endDate 終了日時
+     * @param endDate   終了日時
      * @return 勤怠記録リスト
      */
     @Transactional(readOnly = true)
-    public List<AttendanceRecord> getAttendanceByDateRange(Integer userId, OffsetDateTime startDate, OffsetDateTime endDate) {
+    public List<AttendanceRecord> getAttendanceByDateRange(Integer userId, OffsetDateTime startDate,
+            OffsetDateTime endDate) {
         return attendanceRecordRepository.findByUserIdAndDateRange(userId, startDate, endDate);
     }
 
     /**
      * 月間勤怠記録取得
+     * 
      * @param userId ユーザーID
-     * @param year 年
-     * @param month 月
+     * @param year   年
+     * @param month  月
      * @return 勤怠記録リスト
      */
     @Transactional(readOnly = true)
@@ -323,34 +333,36 @@ public class AttendanceService {
 
     /**
      * 現在の勤怠状況取得
+     * 
      * @param userId ユーザーID
      * @return 勤怠状況 ("in", "out", "none")
      */
     @Transactional(readOnly = true)
     public String getCurrentAttendanceStatus(Integer userId) {
         List<AttendanceRecord> todayRecords = attendanceRecordRepository.findTodayRecordsByUserId(userId);
-        
+
         if (todayRecords.isEmpty()) {
             return "none";
         }
 
         // 最新の打刻記録を取得
         AttendanceRecord latestRecord = todayRecords.stream()
-            .max((r1, r2) -> r1.getTimestamp().compareTo(r2.getTimestamp()))
-            .orElse(null);
+                .max((r1, r2) -> r1.getTimestamp().compareTo(r2.getTimestamp()))
+                .orElse(null);
 
         return latestRecord != null ? latestRecord.getType() : "none";
     }
 
     /**
      * 日次サマリー更新
+     * 
      * @param userId ユーザーID
-     * @param date 対象日
+     * @param date   対象日
      */
     private void updateDailySummary(Integer userId, LocalDate date) {
         try {
             List<AttendanceRecord> dayRecords = attendanceRecordRepository.findByUserIdAndDate(userId, date);
-            
+
             if (dayRecords.size() < 2) {
                 log.info("出勤/退勤が揃っていないためサマリー更新をスキップ: userId={}, date={}", userId, date);
                 return;
@@ -358,12 +370,12 @@ public class AttendanceService {
 
             // 出勤/退勤記録を取得
             Optional<AttendanceRecord> clockInRecord = dayRecords.stream()
-                .filter(r -> "in".equals(r.getType()))
-                .findFirst();
-            
+                    .filter(r -> "in".equals(r.getType()))
+                    .findFirst();
+
             Optional<AttendanceRecord> clockOutRecord = dayRecords.stream()
-                .filter(r -> "out".equals(r.getType()))
-                .findFirst();
+                    .filter(r -> "out".equals(r.getType()))
+                    .findFirst();
 
             if (clockInRecord.isEmpty() || clockOutRecord.isEmpty()) {
                 log.info("出勤/退勤記録が不完全なためサマリー更新をスキップ: userId={}, date={}", userId, date);
@@ -373,13 +385,14 @@ public class AttendanceService {
             // 勤務時間計算
             OffsetDateTime clockInTime = clockInRecord.get().getTimestamp();
             OffsetDateTime clockOutTime = clockOutRecord.get().getTimestamp();
-            
+
             long workingMinutes = java.time.Duration.between(clockInTime, clockOutTime).toMinutes();
-            BigDecimal totalHours = BigDecimal.valueOf(workingMinutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal totalHours = BigDecimal.valueOf(workingMinutes).divide(BigDecimal.valueOf(60), 2,
+                    java.math.RoundingMode.HALF_UP);
 
             // 既存サマリー取得または新規作成
             Optional<AttendanceSummary> existingSummary = attendanceSummaryRepository
-                .findByUserIdAndTargetDate(userId, date);
+                    .findByUserIdAndTargetDate(userId, date);
 
             AttendanceSummary summary;
             if (existingSummary.isPresent()) {
@@ -392,7 +405,7 @@ public class AttendanceService {
             }
 
             summary.setTotalHours(totalHours);
-            
+
             // 残業時間計算（8時間超過分）
             BigDecimal standardHours = BigDecimal.valueOf(8);
             if (totalHours.compareTo(standardHours) > 0) {
@@ -411,6 +424,7 @@ public class AttendanceService {
 
     /**
      * 今日の勤怠記録取得
+     * 
      * @param userId ユーザーID
      * @return 今日の勤怠記録リスト
      */
@@ -420,21 +434,24 @@ public class AttendanceService {
 
     /**
      * 最新の勤怠記録取得
+     * 
      * @param userId ユーザーID
      * @return 最新の勤怠記録（存在しない場合は空のOptional）
      */
     public Optional<AttendanceRecord> getLatestRecord(Long userId) {
-        List<AttendanceRecord> records = attendanceRecordRepository.findTopByUserIdOrderByTimestampDesc(userId.intValue());
-        
+        List<AttendanceRecord> records = attendanceRecordRepository
+                .findTopByUserIdOrderByTimestampDesc(userId.intValue());
+
         if (records == null || records.isEmpty()) {
             return Optional.empty();
         }
-        
+
         return Optional.of(records.get(0));
     }
 
     /**
      * 勤怠統計情報取得
+     * 
      * @return 今日の勤怠統計
      */
     @Transactional(readOnly = true)
@@ -443,30 +460,31 @@ public class AttendanceService {
         Long clockedInUsers = attendanceRecordRepository.countTodayClockInUsers();
 
         return java.util.Map.of(
-            "totalRecords", totalRecords,
-            "clockedInUsers", clockedInUsers,
-            "date", LocalDate.now()
-        );
+                "totalRecords", totalRecords,
+                "clockedInUsers", clockedInUsers,
+                "date", LocalDate.now());
     }
-    
+
     /**
      * ユーザーの最新打刻記録取得
+     * 
      * @param userId ユーザーID
      * @return 最新の打刻記録
      */
     @Transactional(readOnly = true)
     public Optional<AttendanceRecord> getLatestAttendanceRecord(Integer userId) {
         List<AttendanceRecord> records = attendanceRecordRepository.findTopByUserIdOrderByTimestampDesc(userId);
-        
+
         if (records == null || records.isEmpty()) {
             return Optional.empty();
         }
-        
+
         return Optional.of(records.get(0));
     }
 
     /**
      * 部署別今日の勤怠記録取得
+     * 
      * @param departmentId 部署ID
      * @return 今日の部署別勤怠記録
      */
@@ -477,23 +495,24 @@ public class AttendanceService {
 
     /**
      * 日次サマリー取得
+     * 
      * @param userId ユーザーID
-     * @param date 対象日
+     * @param date   対象日
      * @return 日次サマリーデータ
      */
     @Transactional(readOnly = true)
     public DailySummaryData getDailySummary(Long userId, LocalDate date) {
         List<AttendanceRecord> dayRecords = attendanceRecordRepository.findByUserIdAndDate(userId.intValue(), date);
-        
+
         AttendanceRecord clockInRecord = dayRecords.stream()
-            .filter(r -> "in".equals(r.getType()))
-            .findFirst()
-            .orElse(null);
-        
+                .filter(r -> "in".equals(r.getType()))
+                .findFirst()
+                .orElse(null);
+
         AttendanceRecord clockOutRecord = dayRecords.stream()
-            .filter(r -> "out".equals(r.getType()))
-            .findFirst()
-            .orElse(null);
+                .filter(r -> "out".equals(r.getType()))
+                .findFirst()
+                .orElse(null);
 
         BigDecimal totalHours = BigDecimal.ZERO;
         BigDecimal overtimeHours = BigDecimal.ZERO;
@@ -501,11 +520,11 @@ public class AttendanceService {
 
         if (clockInRecord != null && clockOutRecord != null) {
             long workingMinutes = java.time.Duration.between(
-                clockInRecord.getTimestamp(), 
-                clockOutRecord.getTimestamp()
-            ).toMinutes();
-            totalHours = BigDecimal.valueOf(workingMinutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
-            
+                    clockInRecord.getTimestamp(),
+                    clockOutRecord.getTimestamp()).toMinutes();
+            totalHours = BigDecimal.valueOf(workingMinutes).divide(BigDecimal.valueOf(60), 2,
+                    java.math.RoundingMode.HALF_UP);
+
             BigDecimal standardHours = BigDecimal.valueOf(8);
             if (totalHours.compareTo(standardHours) > 0) {
                 overtimeHours = totalHours.subtract(standardHours);
@@ -521,29 +540,51 @@ public class AttendanceService {
     public static class ClockInRequest {
         @NotNull(message = "緯度は必須です")
         private Double latitude;
-        
+
         @NotNull(message = "経度は必須です")
         private Double longitude;
 
         // Getters and Setters
-        public Double getLatitude() { return latitude; }
-        public void setLatitude(Double latitude) { this.latitude = latitude; }
-        public Double getLongitude() { return longitude; }
-        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(Double latitude) {
+            this.latitude = latitude;
+        }
+
+        public Double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(Double longitude) {
+            this.longitude = longitude;
+        }
     }
 
     public static class ClockOutRequest {
         @NotNull(message = "緯度は必須です")
         private Double latitude;
-        
+
         @NotNull(message = "経度は必須です")
         private Double longitude;
 
         // Getters and Setters
-        public Double getLatitude() { return latitude; }
-        public void setLatitude(Double latitude) { this.latitude = latitude; }
-        public Double getLongitude() { return longitude; }
-        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Double getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(Double latitude) {
+            this.latitude = latitude;
+        }
+
+        public Double getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(Double longitude) {
+            this.longitude = longitude;
+        }
     }
 
     public static class ClockInResponse {
@@ -560,14 +601,37 @@ public class AttendanceService {
         }
 
         // Getters and Setters
-        public boolean isSuccess() { return success; }
-        public void setSuccess(boolean success) { this.success = success; }
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-        public AttendanceRecord getRecord() { return record; }
-        public void setRecord(AttendanceRecord record) { this.record = record; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public AttendanceRecord getRecord() {
+            return record;
+        }
+
+        public void setRecord(AttendanceRecord record) {
+            this.record = record;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
 
         public static ClockInResponse error(String message) {
             return new ClockInResponse(false, message, null, null);
@@ -592,14 +656,37 @@ public class AttendanceService {
         }
 
         // Getters and Setters
-        public boolean isSuccess() { return success; }
-        public void setSuccess(boolean success) { this.success = success; }
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-        public AttendanceRecord getRecord() { return record; }
-        public void setRecord(AttendanceRecord record) { this.record = record; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public AttendanceRecord getRecord() {
+            return record;
+        }
+
+        public void setRecord(AttendanceRecord record) {
+            this.record = record;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
 
         public static ClockOutResponse error(String message) {
             return new ClockOutResponse(false, message, null, null);
@@ -618,8 +705,8 @@ public class AttendanceService {
         private AttendanceRecord clockInRecord;
         private AttendanceRecord clockOutRecord;
 
-        public DailySummaryData(LocalDate date, BigDecimal totalHours, BigDecimal overtimeHours, 
-                               String status, AttendanceRecord clockInRecord, AttendanceRecord clockOutRecord) {
+        public DailySummaryData(LocalDate date, BigDecimal totalHours, BigDecimal overtimeHours,
+                String status, AttendanceRecord clockInRecord, AttendanceRecord clockOutRecord) {
             this.date = date;
             this.totalHours = totalHours;
             this.overtimeHours = overtimeHours;
@@ -629,17 +716,52 @@ public class AttendanceService {
         }
 
         // Getters and Setters
-        public LocalDate getDate() { return date; }
-        public void setDate(LocalDate date) { this.date = date; }
-        public BigDecimal getTotalHours() { return totalHours; }
-        public void setTotalHours(BigDecimal totalHours) { this.totalHours = totalHours; }
-        public BigDecimal getOvertimeHours() { return overtimeHours; }
-        public void setOvertimeHours(BigDecimal overtimeHours) { this.overtimeHours = overtimeHours; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
-        public AttendanceRecord getClockInRecord() { return clockInRecord; }
-        public void setClockInRecord(AttendanceRecord clockInRecord) { this.clockInRecord = clockInRecord; }
-        public AttendanceRecord getClockOutRecord() { return clockOutRecord; }
-        public void setClockOutRecord(AttendanceRecord clockOutRecord) { this.clockOutRecord = clockOutRecord; }
+        public LocalDate getDate() {
+            return date;
+        }
+
+        public void setDate(LocalDate date) {
+            this.date = date;
+        }
+
+        public BigDecimal getTotalHours() {
+            return totalHours;
+        }
+
+        public void setTotalHours(BigDecimal totalHours) {
+            this.totalHours = totalHours;
+        }
+
+        public BigDecimal getOvertimeHours() {
+            return overtimeHours;
+        }
+
+        public void setOvertimeHours(BigDecimal overtimeHours) {
+            this.overtimeHours = overtimeHours;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public AttendanceRecord getClockInRecord() {
+            return clockInRecord;
+        }
+
+        public void setClockInRecord(AttendanceRecord clockInRecord) {
+            this.clockInRecord = clockInRecord;
+        }
+
+        public AttendanceRecord getClockOutRecord() {
+            return clockOutRecord;
+        }
+
+        public void setClockOutRecord(AttendanceRecord clockOutRecord) {
+            this.clockOutRecord = clockOutRecord;
+        }
     }
 }

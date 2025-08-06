@@ -3,7 +3,6 @@ package com.example.companybackend.command;
 import com.example.companybackend.entity.User;
 import com.example.companybackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,14 +30,14 @@ import java.util.Optional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-@Slf4j
 public class EmployeeCommands {
 
-    
+    private static final Logger log = LoggerFactory.getLogger(EmployeeCommands.class);
     private final UserRepository userRepository;
 
     /**
      * 従業員作成
+     * 
      * @param command 従業員作成コマンド
      * @return 作成された従業員
      * @throws IllegalArgumentException 不正なデータの場合
@@ -69,7 +68,8 @@ public class EmployeeCommands {
 
     /**
      * 従業員更新
-     * @param userId ユーザーID
+     * 
+     * @param userId  ユーザーID
      * @param command 従業員更新コマンド
      * @return 更新された従業員
      * @throws IllegalArgumentException 従業員が見つからない場合
@@ -79,7 +79,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // 重複チェック（自身を除外）
         if (command.getUsername() != null) {
@@ -120,6 +120,7 @@ public class EmployeeCommands {
 
     /**
      * 従業員削除（論理削除）
+     * 
      * @param userId ユーザーID
      * @throws IllegalArgumentException 従業員が見つからない場合
      */
@@ -128,7 +129,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // 無効化処理
         employee.setIsActive(false);
@@ -140,6 +141,7 @@ public class EmployeeCommands {
 
     /**
      * 従業員有効化
+     * 
      * @param userId ユーザーID
      * @throws IllegalArgumentException 従業員が見つからない場合
      */
@@ -148,7 +150,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // 有効化処理
         employee.setIsActive(true);
@@ -160,7 +162,8 @@ public class EmployeeCommands {
 
     /**
      * パスワード変更
-     * @param userId ユーザーID
+     * 
+     * @param userId          ユーザーID
      * @param newPasswordHash 新しいパスワードハッシュ
      * @throws IllegalArgumentException 従業員が見つからない場合
      */
@@ -169,7 +172,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // パスワード更新
         employee.setPasswordHash(newPasswordHash);
@@ -181,7 +184,8 @@ public class EmployeeCommands {
 
     /**
      * 部署変更
-     * @param userId ユーザーID
+     * 
+     * @param userId          ユーザーID
      * @param newDepartmentId 新しい部署ID
      * @throws IllegalArgumentException 従業員が見つからない場合
      */
@@ -190,7 +194,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // 部署変更
         employee.setDepartmentId(newDepartmentId);
@@ -202,7 +206,8 @@ public class EmployeeCommands {
 
     /**
      * 役職変更
-     * @param userId ユーザーID
+     * 
+     * @param userId  ユーザーID
      * @param newRole 新しい役職
      * @throws IllegalArgumentException 従業員が見つからない場合
      */
@@ -211,7 +216,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // 役職妥当性チェック
         if (!newRole.matches("admin|manager|employee")) {
@@ -228,7 +233,8 @@ public class EmployeeCommands {
 
     /**
      * 勤務地タイプ変更
-     * @param userId ユーザーID
+     * 
+     * @param userId          ユーザーID
      * @param newLocationType 新しい勤務地タイプ
      * @throws IllegalArgumentException 従業員が見つからない場合
      */
@@ -237,7 +243,7 @@ public class EmployeeCommands {
 
         // 従業員存在確認
         User employee = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + userId));
 
         // 勤務地タイプ妥当性チェック
         if (!newLocationType.matches("office|client")) {
@@ -254,6 +260,7 @@ public class EmployeeCommands {
 
     /**
      * 一括従業員作成
+     * 
      * @param commands 従業員作成コマンドリスト
      * @return 作成された従業員リスト
      */
@@ -261,8 +268,8 @@ public class EmployeeCommands {
         log.info("一括従業員作成開始: count={}", commands.size());
 
         List<User> employees = commands.stream()
-            .map(this::createEmployee)
-            .toList();
+                .map(this::createEmployee)
+                .toList();
 
         log.info("一括従業員作成完了: count={}", employees.size());
         return employees;
@@ -270,6 +277,7 @@ public class EmployeeCommands {
 
     /**
      * 一括従業員無効化
+     * 
      * @param userIds ユーザーIDリスト
      */
     public void deactivateEmployeesBatch(List<Long> userIds) {
@@ -282,7 +290,8 @@ public class EmployeeCommands {
 
     /**
      * 一括部署変更
-     * @param userIds ユーザーIDリスト
+     * 
+     * @param userIds         ユーザーIDリスト
      * @param newDepartmentId 新しい部署ID
      */
     public void changeDepartmentBatch(List<Long> userIds, Integer newDepartmentId) {
@@ -295,33 +304,34 @@ public class EmployeeCommands {
 
     /**
      * 重複制約チェック
-     * @param username ユーザー名
-     * @param email メールアドレス
-     * @param employeeId 従業員ID
+     * 
+     * @param username      ユーザー名
+     * @param email         メールアドレス
+     * @param employeeId    従業員ID
      * @param excludeUserId 除外するユーザーID（更新時）
      * @throws IllegalArgumentException 重複がある場合
      */
     private void validateUniqueConstraints(String username, String email, String employeeId, Long excludeUserId) {
         if (username != null) {
             Optional<User> existingByUsername = userRepository.findByUsername(username);
-            if (existingByUsername.isPresent() && 
-                (excludeUserId == null || !existingByUsername.get().getId().equals(excludeUserId))) {
+            if (existingByUsername.isPresent() &&
+                    (excludeUserId == null || !existingByUsername.get().getId().equals(excludeUserId))) {
                 throw new IllegalArgumentException("ユーザー名が既に使用されています: " + username);
             }
         }
 
         if (email != null) {
             Optional<User> existingByEmail = userRepository.findByEmail(email);
-            if (existingByEmail.isPresent() && 
-                (excludeUserId == null || !existingByEmail.get().getId().equals(excludeUserId))) {
+            if (existingByEmail.isPresent() &&
+                    (excludeUserId == null || !existingByEmail.get().getId().equals(excludeUserId))) {
                 throw new IllegalArgumentException("メールアドレスが既に使用されています: " + email);
             }
         }
 
         if (employeeId != null) {
             Optional<User> existingByEmployeeId = userRepository.findByEmployeeId(employeeId);
-            if (existingByEmployeeId.isPresent() && 
-                (excludeUserId == null || !existingByEmployeeId.get().getId().equals(excludeUserId))) {
+            if (existingByEmployeeId.isPresent() &&
+                    (excludeUserId == null || !existingByEmployeeId.get().getId().equals(excludeUserId))) {
                 throw new IllegalArgumentException("従業員IDが既に使用されています: " + employeeId);
             }
         }
@@ -329,28 +339,30 @@ public class EmployeeCommands {
 
     /**
      * 従業員メールアドレスによる検索
+     * 
      * @param email メールアドレス
      * @return 従業員情報
      */
     public User findEmployeeByEmail(String email) {
         log.info("従業員メールアドレス検索: email={}", email);
-        
+
         // 修正: findByEmailメソッドが存在しないため、適切なメソッドに置き換え
         return userRepository.findByUsername(email)
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + email));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + email));
     }
 
     /**
      * 従業員IDによる検索
+     * 
      * @param employeeId 従業員ID
      * @return 従業員情報
      */
     public User findEmployeeByEmployeeId(String employeeId) {
         log.info("従業員ID検索: employeeId={}", employeeId);
-        
+
         // 修正: findByEmployeeIdメソッドが存在しないため、IDで検索するように変更
         return userRepository.findById(Long.valueOf(employeeId))
-            .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + employeeId));
+                .orElseThrow(() -> new IllegalArgumentException("従業員が見つかりません: " + employeeId));
     }
 
     /**
@@ -367,29 +379,69 @@ public class EmployeeCommands {
         private String locationType;
 
         // Getters and Setters
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-        
-        public String getPasswordHash() { return passwordHash; }
-        public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-        
-        public String getEmployeeId() { return employeeId; }
-        public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
-        
-        public String getFullName() { return fullName; }
-        public void setFullName(String fullName) { this.fullName = fullName; }
-        
-        public Integer getDepartmentId() { return departmentId; }
-        public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }
-        
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
-        
-        public String getLocationType() { return locationType; }
-        public void setLocationType(String locationType) { this.locationType = locationType; }
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPasswordHash() {
+            return passwordHash;
+        }
+
+        public void setPasswordHash(String passwordHash) {
+            this.passwordHash = passwordHash;
+        }
+
+        public String getEmployeeId() {
+            return employeeId;
+        }
+
+        public void setEmployeeId(String employeeId) {
+            this.employeeId = employeeId;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
+        }
+
+        public Integer getDepartmentId() {
+            return departmentId;
+        }
+
+        public void setDepartmentId(Integer departmentId) {
+            this.departmentId = departmentId;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+
+        public String getLocationType() {
+            return locationType;
+        }
+
+        public void setLocationType(String locationType) {
+            this.locationType = locationType;
+        }
     }
 
     /**
@@ -406,28 +458,68 @@ public class EmployeeCommands {
         private String locationType;
 
         // Getters and Setters
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-        
-        public String getPasswordHash() { return passwordHash; }
-        public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-        
-        public String getEmployeeId() { return employeeId; }
-        public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }
-        
-        public String getFullName() { return fullName; }
-        public void setFullName(String fullName) { this.fullName = fullName; }
-        
-        public Integer getDepartmentId() { return departmentId; }
-        public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }
-        
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
-        
-        public String getLocationType() { return locationType; }
-        public void setLocationType(String locationType) { this.locationType = locationType; }
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPasswordHash() {
+            return passwordHash;
+        }
+
+        public void setPasswordHash(String passwordHash) {
+            this.passwordHash = passwordHash;
+        }
+
+        public String getEmployeeId() {
+            return employeeId;
+        }
+
+        public void setEmployeeId(String employeeId) {
+            this.employeeId = employeeId;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
+        }
+
+        public Integer getDepartmentId() {
+            return departmentId;
+        }
+
+        public void setDepartmentId(Integer departmentId) {
+            this.departmentId = departmentId;
+        }
+
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
+
+        public String getLocationType() {
+            return locationType;
+        }
+
+        public void setLocationType(String locationType) {
+            this.locationType = locationType;
+        }
     }
 }

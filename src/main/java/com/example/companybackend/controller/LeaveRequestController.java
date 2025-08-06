@@ -2,8 +2,10 @@ package com.example.companybackend.controller;
 
 import com.example.companybackend.entity.LeaveRequest;
 import com.example.companybackend.service.LeaveService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +28,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/leave")
 @RequiredArgsConstructor
-@Slf4j
 public class LeaveRequestController {
+
+    private static final Logger log = LoggerFactory.getLogger(LeaveRequestController.class);
 
     private final LeaveService leaveService;
 

@@ -3,7 +3,8 @@ package com.example.companybackend.controller;
 import com.example.companybackend.batch.service.BatchJobService;
 import com.example.companybackend.dto.*;
 import com.example.companybackend.service.BatchStatusService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -17,10 +18,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestController
-@RequestMapping("/api/batch")
-@Slf4j
+// @RestController
+// @RequestMapping("/api/batch")
 public class BatchController {
+
+    private static final Logger log = LoggerFactory.getLogger(BatchController.class);
 
     @Autowired
     private JobLauncher jobLauncher;
@@ -138,88 +140,104 @@ public class BatchController {
     /**
      * 有給日数更新バッチ API
      */
-    @PostMapping("/update-paid-leave")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BatchResponseDto.PaidLeaveUpdateBatchResponse> executePaidLeaveUpdateBatch(
-            @RequestBody(required = false) Map<String, Object> parameters) {
-        try {
-            log.info("有給日数更新バッチを実行します。パラメータ: {}", parameters);
-            // 执行有給日数更新批处理
-            batchJobService.runJob(paidLeaveUpdateJob, parameters);
-
-            BatchResponseDto.PaidLeaveUpdateBatchResponse response = new BatchResponseDto.PaidLeaveUpdateBatchResponse();
-            response.setSuccess(true);
-            response.setMessage("有給日数更新バッチを実行しました");
-            response.setExecutedAt(LocalDateTime.now());
-
-            // 设置响应数据
-            BatchResponseDto.PaidLeaveUpdateData data = new BatchResponseDto.PaidLeaveUpdateData();
-            data.setFiscalYear(2025);
-            data.setUpdatedCount(48);
-            data.setTotalUserCount(50);
-            data.setSuccessRate(96.0);
-            data.setErrorCount(2);
-            response.setData(data);
-
-            log.info("有給日数更新バッチが正常に完了しました。");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("有給日数更新バッチの実行中にエラーが発生しました。", e);
-            BatchResponseDto.PaidLeaveUpdateBatchResponse response = new BatchResponseDto.PaidLeaveUpdateBatchResponse();
-            response.setSuccess(false);
-            response.setMessage("有給日数更新バッチの実行に失敗しました: " + e.getMessage());
-            response.setExecutedAt(LocalDateTime.now());
-            return ResponseEntity.status(500).body(response);
-        }
-    }
+    /*
+     * @PostMapping("/update-paid-leave")
+     * 
+     * @PreAuthorize("hasRole('ADMIN')")
+     * public ResponseEntity<BatchResponseDto.PaidLeaveUpdateBatchResponse>
+     * executePaidLeaveUpdateBatch(
+     * 
+     * @RequestBody(required = false) Map<String, Object> parameters) {
+     * try {
+     * log.info("有給日数更新バッチを実行します。パラメータ: {}", parameters);
+     * // 执行有給日数更新批处理
+     * batchJobService.runJob(paidLeaveUpdateJob, parameters);
+     * 
+     * BatchResponseDto.PaidLeaveUpdateBatchResponse response = new
+     * BatchResponseDto.PaidLeaveUpdateBatchResponse();
+     * response.setSuccess(true);
+     * response.setMessage("有給日数更新バッチを実行しました");
+     * response.setExecutedAt(LocalDateTime.now());
+     * 
+     * // 设置响应数据
+     * BatchResponseDto.PaidLeaveUpdateData data = new
+     * BatchResponseDto.PaidLeaveUpdateData();
+     * data.setFiscalYear(2025);
+     * data.setUpdatedCount(48);
+     * data.setTotalUserCount(50);
+     * data.setSuccessRate(96.0);
+     * data.setErrorCount(2);
+     * response.setData(data);
+     * 
+     * log.info("有給日数更新バッチが正常に完了しました。");
+     * return ResponseEntity.ok(response);
+     * } catch (Exception e) {
+     * log.error("有給日数更新バッチの実行中にエラーが発生しました。", e);
+     * BatchResponseDto.PaidLeaveUpdateBatchResponse response = new
+     * BatchResponseDto.PaidLeaveUpdateBatchResponse();
+     * response.setSuccess(false);
+     * response.setMessage("有給日数更新バッチの実行に失敗しました: " + e.getMessage());
+     * response.setExecutedAt(LocalDateTime.now());
+     * return ResponseEntity.status(500).body(response);
+     * }
+     * }
+     */
 
     /**
      * データクリーンアップバッチ API
      */
-    @PostMapping("/cleanup-data")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BatchResponseDto.DataCleanupBatchResponse> executeDataCleanupBatch(
-            @RequestBody(required = false) Map<String, Object> parameters) {
-        try {
-            log.info("データクリーンアップバッチを実行します。パラメータ: {}", parameters);
-
-            // データクリーンアップバッチ処理を実行
-            batchJobService.runJob(dataCleanupJob, parameters);
-
-            BatchResponseDto.DataCleanupBatchResponse response = new BatchResponseDto.DataCleanupBatchResponse();
-            response.setSuccess(true);
-            response.setMessage("データクリーンアップバッチを実行しました");
-            response.setExecutedAt(LocalDateTime.now());
-
-            // 実際の処理結果を設定
-            BatchResponseDto.DataCleanupResult data = new BatchResponseDto.DataCleanupResult();
-            data.setRetentionMonths(12);
-            data.setCutoffDate(java.time.OffsetDateTime.now().minusMonths(12).toLocalDate().toString());
-
-            // 実際の削除件数を取得（バッチ実行後の統計から）
-            // 注意: 実際の実装では、バッチ実行結果から削除件数を取得する必要があります
-            data.setDeletedCount(0); // バッチ実行結果から取得
-
-            // 削除詳細情報
-            Map<String, Integer> deletedDetails = new HashMap<>();
-            deletedDetails.put("system_logs", 0); // 実際の削除件数
-            data.setDeletedDetails(deletedDetails);
-
-            response.setData(data);
-
-            log.info("データクリーンアップバッチが正常に完了しました。");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("データクリーンアップバッチの実行中にエラーが発生しました。", e);
-            BatchResponseDto.DataCleanupBatchResponse response = new BatchResponseDto.DataCleanupBatchResponse();
-            response.setSuccess(false);
-            response.setMessage("データクリーンアップバッチの実行に失敗しました: " + e.getMessage());
-            response.setExecutedAt(LocalDateTime.now());
-            return ResponseEntity.status(500).body(response);
-        }
-    }
-
-    /**
+    /*
+     * @PostMapping("/cleanup-data")
+     * 
+     * @PreAuthorize("hasRole('ADMIN')")
+     * public ResponseEntity<BatchResponseDto.DataCleanupBatchResponse>
+     * executeDataCleanupBatch(
+     * 
+     * @RequestBody(required = false) Map<String, Object> parameters) {
+     * try {
+     * log.info("データクリーンアップバッチを実行します。パラメータ: {}", parameters);
+     * 
+     * // データクリーンアップバッチ処理を実行
+     * batchJobService.runJob(dataCleanupJob, parameters);
+     * 
+     * BatchResponseDto.DataCleanupBatchResponse response = new
+     * BatchResponseDto.DataCleanupBatchResponse();
+     * response.setSuccess(true);
+     * response.setMessage("データクリーンアップバッチを実行しました");
+     * response.setExecutedAt(LocalDateTime.now());
+     * 
+     * // 実際の処理結果を設定
+     * BatchResponseDto.DataCleanupResult data = new
+     * BatchResponseDto.DataCleanupResult();
+     * data.setRetentionMonths(12);
+     * data.setCutoffDate(java.time.OffsetDateTime.now().minusMonths(12).toLocalDate
+     * ().toString());
+     * 
+     * // 実際の削除件数を取得（バッチ実行後の統計から）
+     * // 注意: 実際の実装では、バッチ実行結果から削除件数を取得する必要があります
+     * data.setDeletedCount(0); // バッチ実行結果から取得
+     * 
+     * // 削除詳細情報
+     * Map<String, Integer> deletedDetails = new HashMap<>();
+     * deletedDetails.put("system_logs", 0); // 実際の削除件数
+     * data.setDeletedDetails(deletedDetails);
+     * 
+     * response.setData(data);
+     * 
+     * log.info("データクリーンアップバッチが正常に完了しました。");
+     * return ResponseEntity.ok(response);
+     * } catch (Exception e) {
+     * log.error("データクリーンアップバッチの実行中にエラーが発生しました。", e);
+     * BatchResponseDto.DataCleanupBatchResponse response = new
+     * BatchResponseDto.DataCleanupBatchResponse();
+     * response.setSuccess(false);
+     * response.setMessage("データクリーンアップバッチの実行に失敗しました: " + e.getMessage());
+     * response.setExecutedAt(LocalDateTime.now());
+     * return ResponseEntity.status(500).body(response);
+     * }
+     * }
+     * 
+     * /**
      * データ修復バッチ API
      */
     @PostMapping("/repair-data")
