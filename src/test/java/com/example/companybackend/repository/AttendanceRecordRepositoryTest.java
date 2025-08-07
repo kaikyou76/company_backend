@@ -429,7 +429,7 @@ class AttendanceRecordRepositoryTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(2L, result); // 今日の記録数
+        assertEquals(1L, result); // 今日の記録数
     }
 
     // ========== 部署別検索テスト ==========

@@ -21,13 +21,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    
-    @Autowired
-    private HtmlSanitizerService htmlSanitizerService;
+    private final HtmlSanitizerService htmlSanitizerService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       HtmlSanitizerService htmlSanitizerService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.htmlSanitizerService = htmlSanitizerService;
     }
 
     public User findByUsername(String username) {

@@ -35,7 +35,7 @@ public class RegisterResponse {
                 user.getLocationType(),
                 user.getCreatedAt()
         );
-        return new RegisterResponse(true, "User registered successfully", userData);
+        return new RegisterResponse(true, "ユーザー登録が正常に完了しました", userData);
     }
     
     public static RegisterResponse success(User user) {
@@ -51,7 +51,7 @@ public class RegisterResponse {
                 user.getLocationType(),
                 user.getCreatedAt()
         );
-        return new RegisterResponse(true, "User registered successfully", userData);
+        return new RegisterResponse(true, "ユーザー登録が正常に完了しました", userData);
     }
 
     public static RegisterResponse error(String message) {
@@ -200,7 +200,10 @@ public class RegisterResponse {
             this.createdAt = createdAt;
         }
     }
-    
+
+    /**
+     * Builderパターン
+     */
     public static class Builder {
         private boolean success;
         private String message;

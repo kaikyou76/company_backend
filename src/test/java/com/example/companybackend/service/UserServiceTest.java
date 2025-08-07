@@ -2,6 +2,7 @@ package com.example.companybackend.service;
 
 import com.example.companybackend.entity.User;
 import com.example.companybackend.repository.UserRepository;
+import com.example.companybackend.security.HtmlSanitizerService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+    
+    @Mock
+    private HtmlSanitizerService htmlSanitizerService;
 
     @InjectMocks
     private UserService userService;
@@ -132,6 +136,9 @@ class UserServiceTest {
         updateRequest.put("fullName", "更新太郎");
         updateRequest.put("email", "updated@example.com");
         updateRequest.put("phone", "090-9876-5432");
+        
+        // Mock HtmlSanitizerService
+        when(htmlSanitizerService.sanitizeHtml(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
@@ -145,6 +152,7 @@ class UserServiceTest {
         assertNotNull(testUser.getUpdatedAt());
 
         verify(userRepository).save(testUser);
+        verify(htmlSanitizerService, times(2)).sanitizeHtml(anyString());
     }
 
     @Test
@@ -155,6 +163,9 @@ class UserServiceTest {
 
         Map<String, Object> updateRequest = new HashMap<>();
         updateRequest.put("fullName", "部分更新太郎");
+        
+        // Mock HtmlSanitizerService
+        when(htmlSanitizerService.sanitizeHtml(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
@@ -165,7 +176,8 @@ class UserServiceTest {
         assertEquals("部分更新太郎", testUser.getFullName());
         assertEquals(originalEmail, testUser.getEmail()); // 変更されない
         assertEquals(originalPhone, testUser.getPhone()); // 変更されない
-
+        
+        verify(htmlSanitizerService).sanitizeHtml(anyString());
         verify(userRepository).save(testUser);
     }
 
@@ -189,6 +201,30 @@ class UserServiceTest {
         assertNotNull(testUser.getUpdatedAt());
 
         verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void testUpdateUserProfile_WithNullValues_ShouldHandleGracefully() {
+        // Given
+        Map<String, Object> updateRequest = new HashMap<>();
+        updateRequest.put("fullName", null);
+        updateRequest.put("email", null);
+        
+        // Mock HtmlSanitizerService
+        when(htmlSanitizerService.sanitizeHtml(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        // When
+        userService.updateUserProfile(testUser, updateRequest);
+
+        // Then
+        // null値は設定されるが、エラーは発生しない
+        assertNull(testUser.getFullName());
+        assertNull(testUser.getEmail());
+
+        verify(userRepository).save(testUser);
+        verify(htmlSanitizerService, times(1)).sanitizeHtml(any()); // Only fullName is sanitized, phone is not in updateRequest
     }
 
     // ========== パスワード変更テスト ==========
@@ -556,26 +592,6 @@ class UserServiceTest {
     }
 
     // ========== エッジケース・境界値テスト ==========
-
-    @Test
-    void testUpdateUserProfile_WithNullValues_ShouldHandleGracefully() {
-        // Given
-        Map<String, Object> updateRequest = new HashMap<>();
-        updateRequest.put("fullName", null);
-        updateRequest.put("email", null);
-
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
-
-        // When
-        userService.updateUserProfile(testUser, updateRequest);
-
-        // Then
-        // null値は設定されるが、エラーは発生しない
-        assertNull(testUser.getFullName());
-        assertNull(testUser.getEmail());
-
-        verify(userRepository).save(testUser);
-    }
 
     @Test
     void testGetUsers_WithMinimumSize_ShouldHandleCorrectly() {
