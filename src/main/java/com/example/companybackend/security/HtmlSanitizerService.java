@@ -1,6 +1,8 @@
 package com.example.companybackend.security;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,19 +12,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class HtmlSanitizerService {
     
+    private static final PolicyFactory POLICY = new HtmlPolicyBuilder()
+        .allowElements("a", "b", "br", "em", "i", "li", "ol", "p", "span", "strong", "ul", "div", "h1", "h2", "h3", "h4", "h5", "h6")
+        .allowAttributes("href").onElements("a")
+        .allowAttributes("class").onElements("div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6")
+        .allowStandardUrlProtocols()
+        .toFactory();
+    
     /**
-     * 对HTML内容进行转义，防止XSS攻击
+     * 对HTML内容进行清理，防止XSS攻击
+     * 使用OWASP HTML Sanitizer进行专业的HTML清理
      * @param htmlInput 用户输入的可能包含HTML的内容
-     * @return 转义后的内容
+     * @return 清理后的内容
      */
     public String sanitizeHtml(String htmlInput) {
         if (htmlInput == null || htmlInput.isEmpty()) {
             return htmlInput;
         }
-        // 使用Apache Commons Text进行HTML转义
-        String escaped = StringEscapeUtils.escapeHtml4(htmlInput);
-        // 额外处理JavaScript代码中的潜在XSS攻击
-        return sanitizeJavaScriptContent(escaped);
+        // 使用OWASP HTML Sanitizer进行专业清理
+        return POLICY.sanitize(htmlInput);
     }
     
     /**
@@ -35,37 +43,6 @@ public class HtmlSanitizerService {
             return textInput;
         }
         // 使用Apache Commons Text进行HTML转义
-        String escaped = StringEscapeUtils.escapeHtml4(textInput);
-        // 额外处理JavaScript代码中的潜在XSS攻击
-        return sanitizeJavaScriptContent(escaped);
-    }
-    
-    /**
-     * 处理JavaScript代码中的潜在XSS攻击
-     * @param input 输入内容
-     * @return 处理后的内容
-     */
-    private String sanitizeJavaScriptContent(String input) {
-        if (input == null || input.isEmpty()) {
-            return input;
-        }
-        
-        // 移除潜在的JavaScript事件处理器
-        String sanitized = input.replaceAll("(?i)\\s*on\\w+\\s*=\\s*['\"].*?['\"]", "");
-        
-        // 移除script标签内容（即使已经被转义）
-        sanitized = sanitized.replaceAll("(?i)&lt;\\s*script\\s*&gt;.*?&lt;\\s*/\\s*script\\s*&gt;", 
-                                         "&lt;script&gt;&lt;/script&gt;");
-        
-        // 移除javascript:协议
-        sanitized = sanitized.replaceAll("(?i)javascript\\s*:", "");
-        
-        // 移除常见的XSS攻击模式，包括alert、eval等
-        sanitized = sanitized.replaceAll("(?i)alert\\s*\\(.*?\\)", "")
-                             .replaceAll("(?i)eval\\s*\\(.*?\\)", "")
-                             .replaceAll("(?i)document\\s*\\.", "")
-                             .replaceAll("(?i)console\\s*\\.", "");
-        
-        return sanitized;
+        return StringEscapeUtils.escapeHtml4(textInput);
     }
 }

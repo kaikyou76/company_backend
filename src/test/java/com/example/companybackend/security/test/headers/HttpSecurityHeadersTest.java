@@ -94,7 +94,7 @@ public class HttpSecurityHeadersTest extends SecurityTestBase {
         // 危険な設定が含まれていないことを確認
         assertFalse(cspHeader.contains("'unsafe-inline'"), "unsafe-inline が許可されていないこと");
         assertFalse(cspHeader.contains("'unsafe-eval'"), "unsafe-eval が許可されていないこと");
-        assertFalse(cspHeader.contains("data:") && cspHeader.contains("script-src"),
+        assertFalse(cspHeader.contains("script-src") && cspHeader.matches(".*script-src[^;]*data:.*"),
                 "script-src で data: スキームが許可されていないこと");
 
         // 推奨設定の確認
@@ -285,7 +285,8 @@ public class HttpSecurityHeadersTest extends SecurityTestBase {
         // When & Then
         MvcResult result = mockMvc.perform(
                 get("/api/users/profile")
-                        .header("Authorization", "Bearer " + validToken))
+                        .header("Authorization", "Bearer " + validToken)
+                        .secure(true)) // HTTPSリクエストをシミュレート
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -516,7 +517,8 @@ public class HttpSecurityHeadersTest extends SecurityTestBase {
         // When & Then
         MvcResult result = mockMvc.perform(
                 get("/api/users/profile")
-                        .header("Authorization", "Bearer " + validToken))
+                        .header("Authorization", "Bearer " + validToken)
+                        .secure(true)) // HTTPSリクエストをシミュレート
                 .andExpect(status().isOk())
                 .andReturn();
 

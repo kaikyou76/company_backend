@@ -1,0 +1,78 @@
+name: Security Test Suite
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+jobs:
+  security-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: comsys_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: AM2013japan
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup PostgreSQL schema
+        run: |
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_test_users (id SERIAL PRIMARY KEY, username VARCHAR(255) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, email VARCHAR(255), full_name VARCHAR(255), role VARCHAR(50) NOT NULL DEFAULT 'USER', location_type VARCHAR(50) DEFAULT 'office', department_id INTEGER, position_id INTEGER, manager_id INTEGER, is_active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_test_sessions (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES security_test_users(id) ON DELETE CASCADE, token_hash VARCHAR(255) NOT NULL, token_type VARCHAR(50) NOT NULL DEFAULT 'ACCESS', expires_at TIMESTAMP NOT NULL, is_revoked BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, revoked_at TIMESTAMP);"
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_rate_limit_log (id SERIAL PRIMARY KEY, ip_address INET NOT NULL, user_id INTEGER REFERENCES security_test_users(id), endpoint VARCHAR(255) NOT NULL, method VARCHAR(10) NOT NULL, request_count INTEGER DEFAULT 1, window_start TIMESTAMP NOT NULL, window_end TIMESTAMP NOT NULL, is_blocked BOOLEAN DEFAULT false, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_xss_test_log (id SERIAL PRIMARY KEY, attack_pattern TEXT NOT NULL, input_data TEXT NOT NULL, sanitized_data TEXT, is_blocked BOOLEAN NOT NULL, endpoint VARCHAR(255) NOT NULL, user_id INTEGER REFERENCES security_test_users(id), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_csrf_test_log (id SERIAL PRIMARY KEY, csrf_token VARCHAR(255), is_valid_token BOOLEAN NOT NULL, origin_header VARCHAR(255), referer_header VARCHAR(255), is_blocked BOOLEAN NOT NULL, endpoint VARCHAR(255) NOT NULL, user_id INTEGER REFERENCES security_test_users(id), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_sql_injection_test_log (id SERIAL PRIMARY KEY, attack_pattern TEXT NOT NULL, input_parameter VARCHAR(255) NOT NULL, query_attempted TEXT, is_blocked BOOLEAN NOT NULL, endpoint VARCHAR(255) NOT NULL, user_id INTEGER REFERENCES security_test_users(id), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+          psql -h localhost -U postgres -d comsys_test -c "CREATE TABLE IF NOT EXISTS security_test_results (id SERIAL PRIMARY KEY, test_suite_name VARCHAR(255) NOT NULL, test_case_name VARCHAR(255) NOT NULL, test_type VARCHAR(50) NOT NULL, status VARCHAR(20) NOT NULL, execution_time_ms BIGINT, error_message TEXT, test_data JSONB, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+        env:
+          PGPASSWORD: AM2013japan
+
+      - name: Run security tests
+        run: |
+          chmod +x ./mvnw
+          ./mvnw test -Dtest=com.example.companybackend.security.test.suite.SecurityTestSuite
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/comsys_test
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: AM2013japan
+
+      - name: Generate test report
+        run: |
+          mkdir -p target/reports
+          echo "Security Test Report" > target/reports/security-test-report.txt
+          echo "Generated at: $(date)" >> target/reports/security-test-report.txt
+          echo "All tests completed." >> target/reports/security-test-report.txt
+
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-test-results
+          path: target/reports/
+          retention-days: 30
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./target/jacoco/test/jacoco.xml
+          flags: security-tests
+          name: security-test-coverage

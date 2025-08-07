@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class RateLimitingTest extends SecurityTestBase {
+public class RateLimitingTest extends SecurityTestBase {
 
     @Override
     protected String getSecurityTestType() {

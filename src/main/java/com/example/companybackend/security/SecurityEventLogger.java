@@ -132,7 +132,7 @@ public class SecurityEventLogger {
      */
     private void checkAndTriggerAlert(String ipAddress, String eventType) {
         try {
-            OffsetDateTime since = OffsetDateTime.now().minusMinutes(ALERT_TIME_WINDOW_MINUTES);
+            LocalDateTime since = LocalDateTime.now().minusMinutes(ALERT_TIME_WINDOW_MINUTES);
             long recentAttacks = securityEventRepository.countByIpAddressAndEventTypeAndCreatedAtAfter(
                     ipAddress, eventType, since);
 

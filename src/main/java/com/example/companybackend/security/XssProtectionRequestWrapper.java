@@ -95,15 +95,10 @@ public class XssProtectionRequestWrapper extends HttpServletRequestWrapper {
      * @return 是否为HTML内容字段
      */
     private boolean isHtmlContentField(String fieldName) {
-        // 根据实际业务需求定义哪些字段可能包含HTML内容
-        // 在当前系统中，用户资料更新可能包含这些字段
-        // 注意：不要对email等有特定格式要求的字段进行HTML转义
+        // 只对明确需要HTML内容处理的字段进行清理
         return ("bio".equalsIgnoreCase(fieldName) || 
                "description".equalsIgnoreCase(fieldName) ||
-               "content".equalsIgnoreCase(fieldName) ||
-               "phoneNumber".equalsIgnoreCase(fieldName) ||
-               "fullName".equalsIgnoreCase(fieldName) ||
-               "name".equalsIgnoreCase(fieldName));
+               "content".equalsIgnoreCase(fieldName));
     }
     
     /**

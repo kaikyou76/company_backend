@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -234,7 +235,62 @@ public class SecurityTestDataManager {
                 GROUP BY test_type
                 """;
 
-        return jdbcTemplate.queryForMap(sql);
+        try {
+            return jdbcTemplate.queryForMap(sql);
+        } catch (Exception e) {
+            return Map.of();
+        }
+    }
+
+    /**
+     * 詳細テスト結果の取得
+     */
+    public List<Map<String, Object>> getDetailedTestResults() {
+        String sql = """
+                SELECT 
+                    test_suite_name,
+                    test_case_name,
+                    test_type,
+                    status,
+                    execution_time_ms,
+                    error_message,
+                    created_at
+                FROM security_test_results
+                ORDER BY created_at DESC
+                LIMIT 100
+                """;
+
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /**
+     * 失敗したテストの取得
+     */
+    public List<Map<String, Object>> getFailedTests() {
+        String sql = """
+                SELECT 
+                    test_suite_name,
+                    test_case_name,
+                    test_type,
+                    status,
+                    execution_time_ms,
+                    error_message,
+                    created_at
+                FROM security_test_results
+                WHERE status = 'FAILED'
+                ORDER BY created_at DESC
+                LIMIT 50
+                """;
+
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     /**
@@ -273,4 +329,35 @@ public class SecurityTestDataManager {
         }
         return true;
     }
+
+    /**
+     * 設定情報を取得する
+     */
+    public Map<String, Object> getConfiguration() {
+        String sql = "SELECT config_key, config_value FROM security_test_config WHERE is_active = true";
+        try {
+            return jdbcTemplate.queryForMap(sql);
+        } catch (Exception e) {
+            return Map.of();
+        }
+    }
+
+    /**
+     * 設定情報を更新する
+     */
+    public void updateConfiguration(String key, String value, String type) {
+        String sql = """
+            INSERT INTO security_test_config (config_key, config_value, config_type, description)
+            VALUES (?, ?, ?, 'Updated by SecurityTestConfigurationManager')
+            ON CONFLICT (config_key) 
+            DO UPDATE SET config_value = EXCLUDED.config_value, updated_at = NOW()
+            """;
+        
+        try {
+            jdbcTemplate.update(sql, key, value, type);
+        } catch (Exception e) {
+            // エラー処理は必要に応じて実装
+        }
+    }
+
 }
