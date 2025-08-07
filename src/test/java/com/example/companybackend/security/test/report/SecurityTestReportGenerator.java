@@ -87,9 +87,17 @@ public class SecurityTestReportGenerator {
         
         // 各テスト種別の統計情報を追加
         for (Map.Entry<String, Object> entry : statistics.entrySet()) {
-            report.append("| ").append(entry.getKey()).append(" | ");
-            // 実際の統計情報はデータベースから取得するため、ここではプレースホルダーを使用
-            report.append("N/A | N/A | N/A | N/A |\n");
+            if (entry.getValue() instanceof Map) {
+                Map<String, Object> stats = (Map<String, Object>) entry.getValue();
+                report.append("| ").append(entry.getKey()).append(" | ")
+                      .append(stats.getOrDefault("total", "N/A")).append(" | ")
+                      .append(stats.getOrDefault("passed", "N/A")).append(" | ")
+                      .append(stats.getOrDefault("failed", "N/A")).append(" | ")
+                      .append(stats.getOrDefault("averageTime", "N/A")).append(" |\n");
+            } else {
+                report.append("| ").append(entry.getKey()).append(" | ");
+                report.append("N/A | N/A | N/A | N/A |\n");
+            }
         }
     }
 
@@ -136,13 +144,60 @@ public class SecurityTestReportGenerator {
         for (Map<String, Object> failedTest : failedTests) {
             String testCaseName = (String) failedTest.getOrDefault("test_case_name", "N/A");
             String errorMessage = (String) failedTest.getOrDefault("error_message", "N/A");
+            String testType = (String) failedTest.getOrDefault("test_type", "N/A");
             
             report.append("### テストケース: ").append(testCaseName).append("\n");
             report.append("- **エラー内容**: ").append(errorMessage).append("\n");
             report.append("- **修正提案**: \n");
-            report.append("  1. エラーメッセージを確認し、失敗の原因を特定してください。\n");
-            report.append("  2. 関連するセキュリティフィルターや検証ロジックを確認してください。\n");
-            report.append("  3. 必要に応じてセキュリティ設定を調整してください。\n");
+            
+            switch (testType) {
+                case "SQL_INJECTION_PROTECTION":
+                    report.append("  1. SQLインジェクション対策フィルターが適切に設定されているか確認してください。\n");
+                    report.append("  2. パラメータ化クエリまたはORMを使用しているか確認してください。\n");
+                    report.append("  3. 入力値検証ロジックを強化してください。\n");
+                    break;
+                case "XSS_PROTECTION":
+                    report.append("  1. XSS対策フィルターが適切に設定されているか確認してください。\n");
+                    report.append("  2. 出力エスケープ処理が適切に行われているか確認してください。\n");
+                    report.append("  3. Content Security Policyヘッダーが適切に設定されているか確認してください。\n");
+                    break;
+                case "CSRF_PROTECTION":
+                    report.append("  1. CSRFトークン生成・検証ロジックが適切に実装されているか確認してください。\n");
+                    report.append("  2. すべての状態変更リクエストにCSRFトークンが含まれているか確認してください。\n");
+                    report.append("  3. Origin/Refererヘッダー検証が適切に行われているか確認してください。\n");
+                    break;
+                case "JWT_AUTHENTICATION":
+                    report.append("  1. JWTトークンの生成・検証ロジックが適切に実装されているか確認してください。\n");
+                    report.append("  2. トークンの有効期限設定が適切か確認してください。\n");
+                    report.append("  3. 秘密鍵の管理方法を確認してください。\n");
+                    break;
+                case "RATE_LIMITING":
+                    report.append("  1. レート制限アルゴリズムの実装を確認してください。\n");
+                    report.append("  2. IPアドレスまたはユーザー単位の制限設定を確認してください。\n");
+                    report.append("  3. 制限超過時の適切なレスポンスを確認してください。\n");
+                    break;
+                case "COMMAND_INJECTION":
+                    report.append("  1. コマンド実行時の入力値検証を確認してください。\n");
+                    report.append("  2. システムコマンドの実行を避けるか、安全な方法で実行しているか確認してください。\n");
+                    report.append("  3. 入力値のエスケープ処理を確認してください。\n");
+                    break;
+                case "PATH_TRAVERSAL":
+                    report.append("  1. ファイルパスの検証ロジックを確認してください。\n");
+                    report.append("  2. 相対パスの使用を制限しているか確認してください。\n");
+                    report.append("  3. アップロードファイルの保存場所を確認してください。\n");
+                    break;
+                case "FILE_UPLOAD_SECURITY":
+                    report.append("  1. アップロードファイルの拡張子制限を確認してください。\n");
+                    report.append("  2. ファイルコンテンツの検証を確認してください。\n");
+                    report.append("  3. アップロードファイルの保存場所とアクセス制限を確認してください。\n");
+                    break;
+                default:
+                    report.append("  1. エラーメッセージを確認し、失敗の原因を特定してください。\n");
+                    report.append("  2. 関連するセキュリティフィルターや検証ロジックを確認してください。\n");
+                    report.append("  3. 必要に応じてセキュリティ設定を調整してください。\n");
+                    break;
+            }
+            
             report.append("  4. 再テストを実行して修正を検証してください。\n\n");
         }
     }
@@ -196,6 +251,31 @@ public class SecurityTestReportGenerator {
                 suggestion.append("  1. CSRFトークン生成・検証ロジックが適切に実装されているか確認してください。\n");
                 suggestion.append("  2. すべての状態変更リクエストにCSRFトークンが含まれているか確認してください。\n");
                 suggestion.append("  3. Origin/Refererヘッダー検証が適切に行われているか確認してください。\n");
+                break;
+            case "JWT_AUTHENTICATION":
+                suggestion.append("  1. JWTトークンの生成・検証ロジックが適切に実装されているか確認してください。\n");
+                suggestion.append("  2. トークンの有効期限設定が適切か確認してください。\n");
+                suggestion.append("  3. 秘密鍵の管理方法を確認してください。\n");
+                break;
+            case "RATE_LIMITING":
+                suggestion.append("  1. レート制限アルゴリズムの実装を確認してください。\n");
+                suggestion.append("  2. IPアドレスまたはユーザー単位の制限設定を確認してください。\n");
+                suggestion.append("  3. 制限超過時の適切なレスポンスを確認してください。\n");
+                break;
+            case "COMMAND_INJECTION":
+                suggestion.append("  1. コマンド実行時の入力値検証を確認してください。\n");
+                suggestion.append("  2. システムコマンドの実行を避けるか、安全な方法で実行しているか確認してください。\n");
+                suggestion.append("  3. 入力値のエスケープ処理を確認してください。\n");
+                break;
+            case "PATH_TRAVERSAL":
+                suggestion.append("  1. ファイルパスの検証ロジックを確認してください。\n");
+                suggestion.append("  2. 相対パスの使用を制限しているか確認してください。\n");
+                suggestion.append("  3. アップロードファイルの保存場所を確認してください。\n");
+                break;
+            case "FILE_UPLOAD_SECURITY":
+                suggestion.append("  1. アップロードファイルの拡張子制限を確認してください。\n");
+                suggestion.append("  2. ファイルコンテンツの検証を確認してください。\n");
+                suggestion.append("  3. アップロードファイルの保存場所とアクセス制限を確認してください。\n");
                 break;
             default:
                 suggestion.append("  1. エラーメッセージを確認し、失敗の原因を特定してください。\n");

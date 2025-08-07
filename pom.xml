@@ -261,6 +261,16 @@
 						<goals>
 							<goal>report</goal>
 						</goals>
+						<phase>test</phase>
+					</execution>
+					
+					<!-- Generate coverage report specifically for integration tests -->
+					<execution>
+						<id>report-integration</id>
+						<goals>
+							<goal>report-integration</goal>
+						</goals>
+						<phase>integration-test</phase>
 					</execution>
 				</executions>
 			</plugin>
