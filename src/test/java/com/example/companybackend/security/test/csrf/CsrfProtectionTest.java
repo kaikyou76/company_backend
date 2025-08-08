@@ -403,7 +403,7 @@ public class CsrfProtectionTest extends SecurityTestBase {
         void testRefererOriginValidation() throws Exception {
                 // Given
                 String validToken = createValidJwtToken(testNormalUser);
-                String validOrigin = "https://company.com";
+                String validOrigin = "http://localhost:3000";
                 String invalidOrigin = "https://malicious.com";
 
                 // CSRFトークンを取得
@@ -432,7 +432,7 @@ public class CsrfProtectionTest extends SecurityTestBase {
                                                 .header("Origin", invalidOrigin)
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(requestBody))
-                                .andExpect(status().isOk()); // モニタリングモードでリクエストが通される
+                                .andExpect(status().isForbidden()); // 不正なOriginヘッダーの場合は403を返すこと
 
                 // When & Then: 正常なOriginヘッダーでリクエスト
                 mockMvc.perform(
@@ -442,7 +442,7 @@ public class CsrfProtectionTest extends SecurityTestBase {
                                                 .header("Origin", validOrigin)
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(requestBody))
-                                .andExpect(status().isOk()); // モニタリングモードでリクエストが通される
+                                .andExpect(status().isOk()); // 正常なOriginヘッダーの場合は200 OKを返すこと
         }
 
         /**

@@ -25,108 +25,142 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.core.env.Environment;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.Arrays;
 
 /**
  * 統合版セキュリティ設定
  * Spring Security 6.x & Spring Boot 3.x 対応
+ * CORS設定を含む
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-        private final JwtTokenProvider jwtTokenProvider;
-        private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-        private final CustomUserDetailsService customUserDetailsService;
-        private final Environment environment;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final Environment environment;
 
-        public SecurityConfig(JwtTokenProvider jwtTokenProvider,
-                        JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                        CustomUserDetailsService customUserDetailsService,
-                        Environment environment) {
-                this.jwtTokenProvider = jwtTokenProvider;
-                this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-                this.customUserDetailsService = customUserDetailsService;
-                this.environment = environment;
-        }
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider,
+                         JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+                         CustomUserDetailsService customUserDetailsService,
+                         Environment environment) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.customUserDetailsService = customUserDetailsService;
+        this.environment = environment;
+    }
 
-        @Bean
-        public AuthenticationManager authenticationManager(
-                        AuthenticationConfiguration authenticationConfiguration) throws Exception {
-                return authenticationConfiguration.getAuthenticationManager();
-        }
+    @Bean
+    public AuthenticationManager authenticationManager(
+    		        AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                // 启用JWT认证
-                http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authorizeHttpRequests(authz -> authz
-                                                // 允许访问认证相关端点
-                                                .requestMatchers("/api/auth/**").permitAll()
-                                                // 允许访问用户注册端点
-                                                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                                                // 允许访问CSRFトークン端点
-                                                .requestMatchers("/api/csrf-token").permitAll()
-                                                // 允许访问Swagger UI和API文档相关资源
-                                                .requestMatchers(
-                                                                "/v3/api-docs/**",
-                                                                "/swagger-ui/**",
-                                                                "/swagger-ui.html")
-                                                .permitAll()
-                                                // 其他所有请求都需要认证
-                                                .anyRequest().authenticated())
-                                // 禁用表单登录和HTTP基本认证
-                                .formLogin(form -> form.disable())
-                                .httpBasic(basic -> basic.disable())
-                                // CSRF保護設定（テスト環境では無効化、本番環境では有効化）
-                                .csrf(csrf -> {
-                                        if (Arrays.asList(environment.getActiveProfiles()).contains("security-test")) {
-                                                csrf.disable(); // テスト環境ではSpring SecurityのCSRF保護を無効化
-                                        } else {
-                                                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-                                        }
-                                })
-                                // 禁用重定向到登录页面
-                                .exceptionHandling(ex -> ex.authenticationEntryPoint(new Http403ForbiddenEntryPoint()));
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // CORS設定を有効化
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-                // 添加JWT认证过滤器
-                http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        // 启用JWT认证
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(authz -> authz
+                // 允许访问认证相关端点
+                .requestMatchers("/api/auth/**").permitAll()
+                // 允许访问用户注册端点
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                // 允许访问CSRFトークン端点
+                .requestMatchers("/api/csrf-token").permitAll()
+                // 允许访问Swagger UI和API文档相关资源
+                .requestMatchers(
+                               "/v3/api-docs/**",
+                               "/swagger-ui/**",
+                               "/swagger-ui.html")
+                .permitAll()
+                // 其他所有请求都需要认证
+                .anyRequest().authenticated())
+            // 禁用表单登录和HTTP基本认证
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
+            // CSRF保護設定（テスト環境では無効化、本番環境では有効化）
+            .csrf(csrf -> {
+                if (Arrays.asList(environment.getActiveProfiles()).contains("security-test")) {
+                    csrf.disable(); // テスト環境ではSpring SecurityのCSRF保護を無効化
+                } else {
+                    csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+                }
+            })
+            // 禁用重定向到登录页面
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(new Http403ForbiddenEntryPoint()));
 
-                // 添加XSS防护过滤器
-                http.addFilterAfter(xssProtectionFilter(), CsrfFilter.class);
+        // 添加JWT认证过滤器
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
-                // 配置安全头
-                http.headers(headers -> headers
-                                .frameOptions(frameOptions -> frameOptions.sameOrigin())
-                                .contentTypeOptions(contentTypeOptions -> {
-                                })
-                                .referrerPolicy(referrer -> referrer
-                                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                                .addHeaderWriter(
-                                                new org.springframework.security.web.header.writers.StaticHeadersWriter(
-                                                                "Content-Security-Policy",
-                                                                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none';"))
-                                .httpStrictTransportSecurity(hsts -> hsts
-                                                .maxAgeInSeconds(31536000) // 1年
-                                                .includeSubDomains(true)
-                                                .preload(true)));
+        // 添加XSS防护过滤器
+        http.addFilterAfter(xssProtectionFilter(), CsrfFilter.class);
 
-                return http.build();
-        }
+        // 配置安全头
+        http.headers(headers -> headers
+            .frameOptions(frameOptions -> frameOptions.sameOrigin())
+            .contentTypeOptions(contentTypeOptions -> {
+            })
+            .referrerPolicy(referrer -> referrer
+                                        .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            .addHeaderWriter(
+                            new org.springframework.security.web.header.writers.StaticHeadersWriter(
+                                            "Content-Security-Policy",
+                                            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none';"))
+            .httpStrictTransportSecurity(hsts -> hsts
+                .maxAgeInSeconds(31536000) // 1年
+                .includeSubDomains(true)
+                .preload(true)));
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+        return http.build();
+    }
 
-        @Bean
-        public XssProtectionFilter xssProtectionFilter() {
-                return new XssProtectionFilter(new HtmlSanitizerService());
-        }
+    /**
+     * CORS設定
+     * フロントエンド（localhost:3000）からのリクエストを許可
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow localhost:3000 specifically (not wildcard) for credentials support
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        
+        // Allow credentials
+        configuration.setAllowCredentials(true);
+        
+        // Allow basic headers
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // Allow essential HTTP methods
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        return source;
+    }
 
-        @Bean
-        public JwtAuthenticationFilter jwtAuthenticationFilter() {
-                return new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
-        }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public XssProtectionFilter xssProtectionFilter() {
+        return new XssProtectionFilter(new HtmlSanitizerService());
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService);
+    }
 }
