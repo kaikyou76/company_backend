@@ -9,7 +9,6 @@ import com.example.companybackend.security.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,18 +22,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.core.env.Environment;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 import java.util.Arrays;
 
 /**
  * 統合版セキュリティ設定
  * Spring Security 6.x & Spring Boot 3.x 対応
- * CORS設定を含む
+ * CSRF保護とCORS設定を含む
  */
 @Configuration
 @EnableWebSecurity
@@ -57,8 +56,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -67,54 +66,60 @@ public class SecurityConfig {
         // CORS設定を有効化
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-        // 启用JWT认证
+        // JWT認証設定
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // 允许访问认证相关端点
+                        // 認証関連エンドポイントを許可
                         .requestMatchers("/api/auth/**").permitAll()
-                        // 允许访问用户注册端点
+                        // ユーザー登録エンドポイントを許可
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        // 允许访问CSRFトークン端点
+                        // CSRFトークンエンドポイントを許可
                         .requestMatchers("/api/csrf/**").permitAll()
-                        // 允许访问Swagger UI和API文档相关资源
-                        .requestMatchers(
-                                "/v3/api-docs/**",
+                        // Swagger UI関連リソースを許可
+                        .requestMatchers("/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html")
                         .permitAll()
-                        // 其他所有请求都需要认证
+                        // その他のリクエストは認証が必要
                         .anyRequest().authenticated())
-                // 禁用表单登录和HTTP基本认证
+                // フォームログインとHTTP基本認証を無効化
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
-                // CSRF保護設定（テスト環境では無効化、本番環境では有効化）
+                // CSRF保護設定（Spring Security標準設定）
                 .csrf(csrf -> {
-                    if (Arrays.asList(environment.getActiveProfiles()).contains("security-test")) {
-                        csrf.disable(); // テスト環境ではSpring SecurityのCSRF保護を無効化
-                    } else {
-                        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-                    }
+                    // CSRFトークンリポジトリの設定
+                    CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+                    tokenRepository.setCookieName("XSRF-TOKEN");
+                    tokenRepository.setHeaderName("X-XSRF-TOKEN");
+
+                    // CSRFトークンリクエストハンドラーの設定
+                    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+                    requestHandler.setCsrfRequestAttributeName("_csrf");
+
+                    csrf.csrfTokenRepository(tokenRepository)
+                            .csrfTokenRequestHandler(requestHandler)
+                            // CSRFトークン取得エンドポイントは除外
+                            .ignoringRequestMatchers("/api/csrf/**");
                 })
-                // 禁用重定向到登录页面
+                // 認証エラー時の処理
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(new Http403ForbiddenEntryPoint()));
 
-        // 添加JWT认证过滤器
+        // JWT認証フィルターを追加
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        // 添加XSS防护过滤器
+        // XSS防護フィルターを追加
         http.addFilterAfter(xssProtectionFilter(), CsrfFilter.class);
 
-        // 配置安全头
+        // セキュリティヘッダーの設定
         http.headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
                 .contentTypeOptions(contentTypeOptions -> {
                 })
                 .referrerPolicy(referrer -> referrer
                         .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                .addHeaderWriter(
-                        new org.springframework.security.web.header.writers.StaticHeadersWriter(
-                                "Content-Security-Policy",
-                                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none';"))
+                .addHeaderWriter(new org.springframework.security.web.header.writers.StaticHeadersWriter(
+                        "Content-Security-Policy",
+                        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none';"))
                 .httpStrictTransportSecurity(hsts -> hsts
                         .maxAgeInSeconds(31536000) // 1年
                         .includeSubDomains(true)
@@ -131,21 +136,23 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow localhost:3000 specifically (not wildcard) for credentials support
+        // localhost:3000を明示的に許可（クレデンシャル対応のためワイルドカードは使用しない）
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
 
-        // Allow credentials
+        // クレデンシャルを許可
         configuration.setAllowCredentials(true);
 
-        // Allow basic headers
+        // 基本的なヘッダーを許可
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // Allow essential HTTP methods
+        // 基本的なHTTPメソッドを許可
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // フロントエンドが必要とするヘッダーを公開
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "X-CSRF-TOKEN", "X-XSRF-TOKEN"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 
