@@ -47,9 +47,9 @@ public class SecurityConfig {
     private final Environment environment;
 
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
-                         JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-                         CustomUserDetailsService customUserDetailsService,
-                         Environment environment) {
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            CustomUserDetailsService customUserDetailsService,
+            Environment environment) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.customUserDetailsService = customUserDetailsService;
@@ -58,7 +58,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-    		        AuthenticationConfiguration authenticationConfiguration) throws Exception {
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -69,34 +69,34 @@ public class SecurityConfig {
 
         // 启用JWT认证
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authz -> authz
-                // 允许访问认证相关端点
-                .requestMatchers("/api/auth/**").permitAll()
-                // 允许访问用户注册端点
-                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                // 允许访问CSRFトークン端点
-                .requestMatchers("/api/csrf-token").permitAll()
-                // 允许访问Swagger UI和API文档相关资源
-                .requestMatchers(
-                               "/v3/api-docs/**",
-                               "/swagger-ui/**",
-                               "/swagger-ui.html")
-                .permitAll()
-                // 其他所有请求都需要认证
-                .anyRequest().authenticated())
-            // 禁用表单登录和HTTP基本认证
-            .formLogin(form -> form.disable())
-            .httpBasic(basic -> basic.disable())
-            // CSRF保護設定（テスト環境では無効化、本番環境では有効化）
-            .csrf(csrf -> {
-                if (Arrays.asList(environment.getActiveProfiles()).contains("security-test")) {
-                    csrf.disable(); // テスト環境ではSpring SecurityのCSRF保護を無効化
-                } else {
-                    csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-                }
-            })
-            // 禁用重定向到登录页面
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(new Http403ForbiddenEntryPoint()));
+                .authorizeHttpRequests(authz -> authz
+                        // 允许访问认证相关端点
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // 允许访问用户注册端点
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                        // 允许访问CSRFトークン端点
+                        .requestMatchers("/api/csrf/**").permitAll()
+                        // 允许访问Swagger UI和API文档相关资源
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
+                        // 其他所有请求都需要认证
+                        .anyRequest().authenticated())
+                // 禁用表单登录和HTTP基本认证
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                // CSRF保護設定（テスト環境では無効化、本番環境では有効化）
+                .csrf(csrf -> {
+                    if (Arrays.asList(environment.getActiveProfiles()).contains("security-test")) {
+                        csrf.disable(); // テスト環境ではSpring SecurityのCSRF保護を無効化
+                    } else {
+                        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+                    }
+                })
+                // 禁用重定向到登录页面
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(new Http403ForbiddenEntryPoint()));
 
         // 添加JWT认证过滤器
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -106,19 +106,19 @@ public class SecurityConfig {
 
         // 配置安全头
         http.headers(headers -> headers
-            .frameOptions(frameOptions -> frameOptions.sameOrigin())
-            .contentTypeOptions(contentTypeOptions -> {
-            })
-            .referrerPolicy(referrer -> referrer
-                                        .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-            .addHeaderWriter(
-                            new org.springframework.security.web.header.writers.StaticHeadersWriter(
-                                            "Content-Security-Policy",
-                                            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none';"))
-            .httpStrictTransportSecurity(hsts -> hsts
-                .maxAgeInSeconds(31536000) // 1年
-                .includeSubDomains(true)
-                .preload(true)));
+                .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                .contentTypeOptions(contentTypeOptions -> {
+                })
+                .referrerPolicy(referrer -> referrer
+                        .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .addHeaderWriter(
+                        new org.springframework.security.web.header.writers.StaticHeadersWriter(
+                                "Content-Security-Policy",
+                                "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none';"))
+                .httpStrictTransportSecurity(hsts -> hsts
+                        .maxAgeInSeconds(31536000) // 1年
+                        .includeSubDomains(true)
+                        .preload(true)));
 
         return http.build();
     }
@@ -130,22 +130,22 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Allow localhost:3000 specifically (not wildcard) for credentials support
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        
+
         // Allow credentials
         configuration.setAllowCredentials(true);
-        
+
         // Allow basic headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        
+
         // Allow essential HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        
+
         return source;
     }
 

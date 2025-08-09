@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * CSRF保護関連のエンドポイント
@@ -44,11 +45,9 @@ public class CsrfController {
             HttpServletResponse response) {
 
         try {
-            // JWTからセッションIDを取得
-            String sessionId = extractSessionId(request);
-            if (sessionId == null) {
-                return ResponseEntity.status(401).body(createErrorResponse("Authentication required"));
-            }
+            // セッションIDの代わりにUUIDを使用
+            // 未認証ユーザーでもCSRFトークンを取得可能にする
+            String sessionId = generateSessionId(request);
 
             // CSRFトークンを生成
             String csrfToken = csrfTokenService.generateToken(sessionId);
@@ -132,6 +131,34 @@ public class CsrfController {
             log.error("Failed to get CSRF status", e);
             return ResponseEntity.status(500).body(createErrorResponse("Failed to get CSRF status"));
         }
+    }
+
+    /**
+     * セッションIDを生成する
+     * JWTトークンが存在する場合はそれを使用し、存在しない場合はUUIDを生成
+     * 
+     * @param request HTTPリクエスト
+     * @return セッションID
+     */
+    private String generateSessionId(HttpServletRequest request) {
+        // Authorizationヘッダーからトークンを取得を試行
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                // JWTトークンが存在する場合はそれを使用
+                String token = authHeader.substring(7);
+                // JWTからユーザーIDまたはセッション情報を抽出
+                // ここではトークンの一部をハッシュ化してセッションIDとして使用
+                return "jwt_" + Integer.toHexString(token.hashCode());
+            } catch (Exception e) {
+                log.debug("Failed to extract session from JWT, using UUID instead", e);
+            }
+        }
+
+        // JWTトークンが存在しない場合（未認証ユーザー）はUUIDを生成
+        String sessionId = "guest_" + UUID.randomUUID().toString();
+        log.debug("Generated new session ID for unauthenticated user: {}", sessionId);
+        return sessionId;
     }
 
     /**
