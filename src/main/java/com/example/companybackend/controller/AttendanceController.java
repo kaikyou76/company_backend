@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/attendance")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AttendanceController {
 
     private static final Logger log = LoggerFactory.getLogger(AttendanceController.class);

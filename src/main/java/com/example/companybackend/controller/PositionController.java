@@ -14,7 +14,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/positions")
-@CrossOrigin(origins = "*")
 public class PositionController {
 
     private final PositionService positionService;

@@ -39,6 +39,23 @@ public class CsrfController {
                 return ResponseEntity.status(500).body(createErrorResponse("CSRF token not available"));
             }
 
+            // デバッグ情報を追加
+            log.debug("CSRF Token Details:");
+            log.debug("  Token: {}", csrfToken.getToken());
+            log.debug("  Header Name: {}", csrfToken.getHeaderName());
+            log.debug("  Parameter Name: {}", csrfToken.getParameterName());
+            log.debug("  Token Length: {}", csrfToken.getToken().length());
+
+            // Cookieの状態も確認
+            if (request.getCookies() != null) {
+                for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                    if ("XSRF-TOKEN".equals(cookie.getName())) {
+                        log.debug("  Cookie XSRF-TOKEN: {}", cookie.getValue());
+                        log.debug("  Cookie matches token: {}", csrfToken.getToken().equals(cookie.getValue()));
+                    }
+                }
+            }
+
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("success", true);
             responseBody.put("csrfToken", csrfToken.getToken());

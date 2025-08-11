@@ -21,20 +21,6 @@ public class CsrfConfigurationProperties {
          */
         private boolean enabled = true;
 
-        /**
-         * 監視モード（ログのみ、ブロックしない）
-         */
-        private boolean monitoringMode = true;
-
-        /**
-         * 警告モード（警告ログ出力、ブロックしない）
-         */
-        private boolean warningMode = true;
-
-        /**
-         * Origin検証の有効/無効
-         */
-        private boolean originValidationEnabled = true;
 
         /**
          * 許可されたオリジンのリスト
@@ -49,7 +35,6 @@ public class CsrfConfigurationProperties {
          * 除外パス（CSRF保護を適用しないパス）
          */
         private List<String> excludedPaths = Arrays.asList(
-                        "/api/auth/**",
                         "/actuator/**",
                         "/api/public/**");
 

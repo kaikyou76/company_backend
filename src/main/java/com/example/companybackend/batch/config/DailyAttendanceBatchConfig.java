@@ -89,9 +89,9 @@ public class DailyAttendanceBatchConfig {
     public Job dailyAttendanceSummaryJob() {
         return new JobBuilder("dailyAttendanceSummaryJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(enhancedJobExecutionListener())
-                .start(preValidationStep())
-                .next(recoveryCheckStep())
+                .listener(dailyAttendanceEnhancedJobExecutionListener())
+                .start(dailyAttendancePreValidationStep())
+                .next(dailyAttendanceRecoveryCheckStep())
                 .next(dataInitializationStep())
                 .next(attendanceProcessingStep())
                 .next(postValidationStep())
@@ -103,9 +103,9 @@ public class DailyAttendanceBatchConfig {
     public Job monthlyAttendanceSummaryJob() {
         return new JobBuilder("monthlyAttendanceSummaryJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(enhancedJobExecutionListener())
-                .start(preValidationStep())
-                .next(recoveryCheckStep())
+                .listener(dailyAttendanceEnhancedJobExecutionListener())
+                .start(dailyAttendancePreValidationStep())
+                .next(dailyAttendanceRecoveryCheckStep())
                 .next(dataInitializationStep())
                 .next(monthlyAttendanceProcessingStep())
                 .next(postValidationStep())
@@ -117,9 +117,9 @@ public class DailyAttendanceBatchConfig {
     public Job paidLeaveUpdateJob() {
         return new JobBuilder("paidLeaveUpdateJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(enhancedJobExecutionListener())
-                .start(preValidationStep())
-                .next(recoveryCheckStep())
+                .listener(dailyAttendanceEnhancedJobExecutionListener())
+                .start(dailyAttendancePreValidationStep())
+                .next(dailyAttendanceRecoveryCheckStep())
                 .next(dataInitializationStep())
                 .next(attendanceProcessingStep()) // 可以根据需要替换为专用的处理步骤
                 .next(postValidationStep())
@@ -133,9 +133,9 @@ public class DailyAttendanceBatchConfig {
     public Job dataRepairJob() {
         return new JobBuilder("dataRepairJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(enhancedJobExecutionListener())
-                .start(preValidationStep())
-                .next(recoveryCheckStep())
+                .listener(dailyAttendanceEnhancedJobExecutionListener())
+                .start(dailyAttendancePreValidationStep())
+                .next(dailyAttendanceRecoveryCheckStep())
                 .next(dataInitializationStep())
                 .next(attendanceProcessingStep()) // 可以根据需要替换为专用的处理步骤
                 .next(postValidationStep())
@@ -147,9 +147,9 @@ public class DailyAttendanceBatchConfig {
     public Job overtimeMonitoringBatchJob() {
         return new JobBuilder("overtimeMonitoringBatchJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(enhancedJobExecutionListener())
-                .start(preValidationStep())
-                .next(recoveryCheckStep())
+                .listener(dailyAttendanceEnhancedJobExecutionListener())
+                .start(dailyAttendancePreValidationStep())
+                .next(dailyAttendanceRecoveryCheckStep())
                 .next(overtimeDataInitializationStep())
                 .next(overtimeMonitoringProcessingStep())
                 .next(postValidationStep())
@@ -158,28 +158,28 @@ public class DailyAttendanceBatchConfig {
     }
 
     @Bean
-    public EnhancedJobExecutionListener enhancedJobExecutionListener() {
+    public EnhancedJobExecutionListener dailyAttendanceEnhancedJobExecutionListener() {
         return new EnhancedJobExecutionListener();
     }
 
     @Bean
-    public EnhancedStepExecutionListener enhancedStepExecutionListener() {
+    public EnhancedStepExecutionListener dailyAttendanceEnhancedStepExecutionListener() {
         return new EnhancedStepExecutionListener();
     }
 
     @Bean
-    public Step preValidationStep() {
-        return new StepBuilder("preValidationStep", jobRepository)
+    public Step dailyAttendancePreValidationStep() {
+        return new StepBuilder("dailyAttendancePreValidationStep", jobRepository)
                 .tasklet(preValidationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
     @Bean
-    public Step recoveryCheckStep() {
-        return new StepBuilder("recoveryCheckStep", jobRepository)
+    public Step dailyAttendanceRecoveryCheckStep() {
+        return new StepBuilder("dailyAttendanceRecoveryCheckStep", jobRepository)
                 .tasklet(recoveryCheckTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -187,7 +187,7 @@ public class DailyAttendanceBatchConfig {
     public Step dataInitializationStep() {
         return new StepBuilder("dataInitializationStep", jobRepository)
                 .tasklet(dataInitializationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -198,7 +198,7 @@ public class DailyAttendanceBatchConfig {
                 .reader(attendanceRecordItemReader())
                 .processor(dailyWorkTimeProcessor())
                 .writer(attendanceSummaryWriter())
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -209,7 +209,7 @@ public class DailyAttendanceBatchConfig {
                 .reader(monthlySummaryItemReader())
                 .processor(monthlyWorkTimeProcessor())
                 .writer(attendanceSummaryWriter())
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -220,7 +220,7 @@ public class DailyAttendanceBatchConfig {
                 .reader(overtimeMonitoringItemReader())
                 .processor(overtimeMonitoringProcessor())
                 .writer(overtimeReportWriter())
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -228,7 +228,7 @@ public class DailyAttendanceBatchConfig {
     public Step overtimeDataInitializationStep() {
         return new StepBuilder("overtimeDataInitializationStep", jobRepository)
                 .tasklet(overtimeDataInitializationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -236,7 +236,7 @@ public class DailyAttendanceBatchConfig {
     public Step postValidationStep() {
         return new StepBuilder("postValidationStep", jobRepository)
                 .tasklet(postValidationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -244,7 +244,7 @@ public class DailyAttendanceBatchConfig {
     public Step thresholdCheckStep() {
         return new StepBuilder("thresholdCheckStep", jobRepository)
                 .tasklet(thresholdCheckTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dailyAttendanceEnhancedStepExecutionListener())
                 .build();
     }
 

@@ -70,9 +70,9 @@ public class DataCleanupBatchConfig {
     public Job dataCleanupJob() {
         return new JobBuilder("dataCleanupJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
-                .listener(enhancedJobExecutionListener())
-                .start(preValidationStep())
-                .next(recoveryCheckStep())
+                .listener(dataCleanupEnhancedJobExecutionListener())
+                .start(dataCleanupPreValidationStep())
+                .next(dataCleanupRecoveryCheckStep())
                 .next(dataCleanupInitializationStep())
                 .next(dataCleanupProcessingStep())
                 .next(postValidationStep())
@@ -81,28 +81,28 @@ public class DataCleanupBatchConfig {
     }
 
     @Bean
-    public EnhancedJobExecutionListener enhancedJobExecutionListener() {
+    public EnhancedJobExecutionListener dataCleanupEnhancedJobExecutionListener() {
         return new EnhancedJobExecutionListener();
     }
 
     @Bean
-    public EnhancedStepExecutionListener enhancedStepExecutionListener() {
+    public EnhancedStepExecutionListener dataCleanupEnhancedStepExecutionListener() {
         return new EnhancedStepExecutionListener();
     }
 
     @Bean
-    public Step preValidationStep() {
-        return new StepBuilder("preValidationStep", jobRepository)
+    public Step dataCleanupPreValidationStep() {
+        return new StepBuilder("dataCleanupPreValidationStep", jobRepository)
                 .tasklet(preValidationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dataCleanupEnhancedStepExecutionListener())
                 .build();
     }
 
     @Bean
-    public Step recoveryCheckStep() {
-        return new StepBuilder("recoveryCheckStep", jobRepository)
+    public Step dataCleanupRecoveryCheckStep() {
+        return new StepBuilder("dataCleanupRecoveryCheckStep", jobRepository)
                 .tasklet(recoveryCheckTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dataCleanupEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -110,7 +110,7 @@ public class DataCleanupBatchConfig {
     public Step dataCleanupInitializationStep() {
         return new StepBuilder("dataCleanupInitializationStep", jobRepository)
                 .tasklet(dataCleanupInitializationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dataCleanupEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -121,7 +121,7 @@ public class DataCleanupBatchConfig {
                 .reader(dataCleanupItemReader())
                 .processor(dataCleanupProcessor())
                 .writer(dataCleanupWriter())
-                .listener(enhancedStepExecutionListener())
+                .listener(dataCleanupEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -129,7 +129,7 @@ public class DataCleanupBatchConfig {
     public Step postValidationStep() {
         return new StepBuilder("postValidationStep", jobRepository)
                 .tasklet(postValidationTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dataCleanupEnhancedStepExecutionListener())
                 .build();
     }
 
@@ -137,7 +137,7 @@ public class DataCleanupBatchConfig {
     public Step cleanupStatisticsStep() {
         return new StepBuilder("cleanupStatisticsStep", jobRepository)
                 .tasklet(cleanupStatisticsTasklet(), transactionManager)
-                .listener(enhancedStepExecutionListener())
+                .listener(dataCleanupEnhancedStepExecutionListener())
                 .build();
     }
 

@@ -40,12 +40,10 @@ public class JwtTokenProvider {
         System.out.println("Token validity from properties: " + tokenValidityInMillis + " ms");
         System.out.println("Refresh expiration from properties: " + refreshExpiration + " ms");
         
-        if (secret.length() < 32) {
-            secret = "default-secret-key-for-company-system-at-least-32-chars";
-        }
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        // 使用更安全の密钥生成方式
+        this.secretKey = Keys.hmacShaKeyFor(Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
         
-        // 尝试从数据库获取JWT过期配置，如果获取不到则使用默认値
+        // 尝試从数据库获取JWT过期配置，如果获取不到则使用默认値
         long dbTokenValidity = getTokenValidityFromDatabase(jdbcTemplate);
         this.tokenValidityInMilliseconds = dbTokenValidity != -1 ? dbTokenValidity : tokenValidityInMillis;
         
@@ -61,8 +59,8 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 从数据库获取JWT令牌有效期
-     * @param jdbcTemplate 数据库访问模板
+     * 从数据库获取JWTトークン有效期
+     * @param jdbcTemplate データベースアクセステンプレート
      * @return トークン有效期（ミリ秒），もしそれが見つからなければ-1
      */
     private long getTokenValidityFromDatabase(JdbcTemplate jdbcTemplate) {
@@ -100,33 +98,6 @@ public class JwtTokenProvider {
     }
 
     /**
-     * リフレッシュトークン生成
-     */
-    public String generateRefreshToken(Authentication authentication) {
-        Object principal = authentication.getPrincipal();
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + refreshExpiration);
-
-        if (principal instanceof User) {
-            User user = (User) principal;
-            return Jwts.builder()
-                    .setSubject(user.getUsername())
-                    .claim("userId", user.getId())
-                    .setIssuedAt(now)
-                    .setExpiration(expiryDate)
-                    .signWith(secretKey, SignatureAlgorithm.HS256)
-                    .compact();
-        } else {
-            return Jwts.builder()
-                    .setSubject(authentication.getName())
-                    .setIssuedAt(now)
-                    .setExpiration(expiryDate)
-                    .signWith(secretKey, SignatureAlgorithm.HS256)
-                    .compact();
-        }
-    }
-
-    /**
      * ユーザーオブジェクトからトークン生成（内部メソッド）
      */
     private String generateTokenFromUser(User user) {
@@ -134,16 +105,16 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + tokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .subject(user.getUsername())
                 .claim("userId", user.getId())
                 .claim("locationType", user.getLocationType())
                 .claim("departmentId", user.getDepartmentId())
                 .claim("positionId", user.getPositionId())
                 .claim("managerId", user.getManagerId())
                 .claim("authorities", getAuthoritiesFromUser(user))
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -155,24 +126,50 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + tokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .setSubject(authentication.getName())
+                .subject(authentication.getName())
                 .claim("authorities", getAuthorities(authentication))
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(secretKey)
                 .compact();
+    }
+
+    /**
+     * リフレッシュトークン生成
+     */
+    public String generateRefreshToken(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshExpiration);
+
+        if (principal instanceof User) {
+            User user = (User) principal;
+            return Jwts.builder()
+                    .subject(user.getUsername())
+                    .claim("userId", user.getId())
+                    .issuedAt(now)
+                    .expiration(expiryDate)
+                    .signWith(secretKey)
+                    .compact();
+        } else {
+            return Jwts.builder()
+                    .subject(authentication.getName())
+                    .issuedAt(now)
+                    .expiration(expiryDate)
+                    .signWith(secretKey)
+                    .compact();
+        }
     }
 
     // --- トークン検証・情報取得メソッド ---
 
     public String getUsernameFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             Claims claims = Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.getSubject();
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("無効なJWTトークン: {}", e.getMessage());
@@ -182,12 +179,11 @@ public class JwtTokenProvider {
 
     public Long getUserIdFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             Claims claims = Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             Long userId = claims.get("userId", Long.class);
             if (userId != null) {
                 return userId;
@@ -201,12 +197,11 @@ public class JwtTokenProvider {
 
     public String getLocationTypeFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             Claims claims = Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.get("locationType", String.class);
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("無効なJWTトークン: {}", e.getMessage());
@@ -216,12 +211,11 @@ public class JwtTokenProvider {
 
     public Integer getDepartmentIdFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             Claims claims = Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.get("departmentId", Integer.class);
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("無効なJWTトークン: {}", e.getMessage());
@@ -253,12 +247,11 @@ public class JwtTokenProvider {
 
     public Claims getAllClaimsFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             return Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("無効なJWTトークン: {}", e.getMessage());
             return null;
@@ -292,12 +285,11 @@ public class JwtTokenProvider {
 
     public Integer getPositionIdFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             Claims claims = Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.get("positionId", Integer.class);
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("無効なJWTトークン: {}", e.getMessage());
@@ -307,12 +299,11 @@ public class JwtTokenProvider {
 
     public Integer getManagerIdFromToken(String token) {
         try {
-            // 修正: Jwts.parserBuilder() を最新版の書き方に合わせる
             Claims claims = Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             return claims.get("managerId", Integer.class);
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("無効なJWTトークン: {}", e.getMessage());
@@ -346,9 +337,8 @@ public class JwtTokenProvider {
      * 権限情報取得（ユーザーオブジェクト経用）
      */
     private List<String> getAuthoritiesFromUser(User user) {
-        // ユーザーオブジェクトから権限情報を取得するロジック
-        // 例: return user.getRoles().stream()...
-        // 実際の実装はUserオブジェクトの構造に依存
-        return List.of(); // ダミー実装（実際のプロジェクトで実装必要）
+        // ユーザーの権限を取得するロジック
+        // 仮にROLE_USERを返す
+        return List.of("ROLE_USER");
     }
 }

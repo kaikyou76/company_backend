@@ -1,9 +1,5 @@
 package com.example.companybackend.controller;
 
-import com.example.companybackend.dto.request.CreateTimeCorrectionRequest;
-import com.example.companybackend.dto.response.CreateTimeCorrectionResponse;
-import com.example.companybackend.dto.response.ApproveTimeCorrectionResponse;
-import com.example.companybackend.dto.response.RejectTimeCorrectionResponse;
 import com.example.companybackend.entity.TimeCorrection;
 import com.example.companybackend.service.TimeCorrectionService;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +9,18 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.HashMap;
+
+// Adding missing DTO class imports
+import com.example.companybackend.dto.request.CreateTimeCorrectionRequest;
+import com.example.companybackend.dto.response.CreateTimeCorrectionResponse;
+import com.example.companybackend.dto.response.ApproveTimeCorrectionResponse;
+import com.example.companybackend.dto.response.RejectTimeCorrectionResponse;
 
 /**
  * 打刻修正申請コントローラー

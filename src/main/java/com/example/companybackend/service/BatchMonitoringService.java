@@ -1,6 +1,8 @@
 package com.example.companybackend.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -11,9 +13,9 @@ import java.util.Map;
  * バッチ監視サービス（簡略版）
  */
 @Service
-@Slf4j
 public class BatchMonitoringService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(BatchMonitoringService.class);
     private final AtomicBoolean isMonitoringActive = new AtomicBoolean(false);
 
     /**
@@ -39,8 +41,8 @@ public class BatchMonitoringService {
      */
     public List<String> getJobNames() {
         // 簡略化された実装
-        return Arrays.asList("dailyAttendanceSummaryJob", "monthlyAttendanceSummaryJob", 
-                           "paidLeaveUpdateJob", "dataCleanupJob", "dataRepairJob");
+        return Arrays.asList("dailyAttendanceSummaryJob", "monthlyAttendanceSummaryJob",
+                "paidLeaveUpdateJob", "dataCleanupJob", "dataRepairJob");
     }
 
     /**

@@ -36,7 +36,6 @@ import java.io.PrintWriter;
 @RestController
 @RequestMapping("/api/reports/attendance")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AttendanceSummaryController {
 
     private static final Logger log = LoggerFactory.getLogger(AttendanceSummaryController.class);

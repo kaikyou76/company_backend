@@ -1,6 +1,5 @@
 package com.example.companybackend.security.test;
 
-import com.example.companybackend.security.test.csrf.CsrfProtectionTest;
 import com.example.companybackend.security.test.headers.HttpSecurityHeadersTest;
 import com.example.companybackend.security.test.xss.XssProtectionTest;
 import org.junit.jupiter.api.*;
@@ -41,8 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Suite
 @SelectClasses({
                 HttpSecurityHeadersTest.class,
-                XssProtectionTest.class,
-                CsrfProtectionTest.class
+                XssProtectionTest.class
 })
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("security-test")

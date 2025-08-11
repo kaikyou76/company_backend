@@ -27,7 +27,8 @@ public class JwtTokenProviderServiceImpl implements JwtTokenProviderService {
         @Value("${app.jwt.expiration:86400000}") long validityMs,
         @Value("${app.jwt.refresh-expiration:604800000}") long refreshValidityMs) {
         
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        // 使用更安全的密钥生成方式
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
         this.validityMs = validityMs;
         this.refreshValidityMs = refreshValidityMs;
         // 使用正确的JwtParser构建方式，确保调用build()方法
@@ -43,7 +44,7 @@ public class JwtTokenProviderServiceImpl implements JwtTokenProviderService {
                 .subject(username)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(secretKey, Jwts.SIG.HS512)
+                .signWith(secretKey)
                 .compact();
     }
     
@@ -57,7 +58,7 @@ public class JwtTokenProviderServiceImpl implements JwtTokenProviderService {
                 .subject(userPrincipal.getUsername())
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(secretKey, Jwts.SIG.HS512)
+                .signWith(secretKey)
                 .compact();
     }
     
@@ -71,7 +72,7 @@ public class JwtTokenProviderServiceImpl implements JwtTokenProviderService {
                 .subject(userPrincipal.getUsername())
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(secretKey, Jwts.SIG.HS512)
+                .signWith(secretKey)
                 .compact();
     }
 

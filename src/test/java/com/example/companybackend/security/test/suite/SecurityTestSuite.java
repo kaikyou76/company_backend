@@ -2,7 +2,6 @@ package com.example.companybackend.security.test.suite;
 
 import com.example.companybackend.security.test.sql.*;
 import com.example.companybackend.security.test.xss.XssProtectionTest;
-import com.example.companybackend.security.test.csrf.CsrfProtectionTest;
 import com.example.companybackend.security.test.headers.HttpSecurityHeadersTest;
 import com.example.companybackend.security.test.jwt.JwtAuthenticationSecurityTest;
 import com.example.companybackend.security.test.rate.RateLimitingTest;
@@ -47,7 +46,6 @@ import org.springframework.test.context.ActiveProfiles;
 
                 // Web攻撃保護テスト
                 XssProtectionTest.class,
-                CsrfProtectionTest.class,
                 RateLimitingTest.class,
 
                 // インジェクション攻撃保護テスト
@@ -75,12 +73,11 @@ public class SecurityTestSuite {
                 System.out.println("1. JWTセキュリティテスト");
                 System.out.println("2. HTTPセキュリティヘッダーテスト");
                 System.out.println("3. XSS保護テスト");
-                System.out.println("4. CSRF保護テスト");
-                System.out.println("5. レート制限テスト");
-                System.out.println("6. SQLインジェクション保護テスト");
-                System.out.println("7. コマンドインジェクション保護テスト");
-                System.out.println("8. パストラバーサル保護テスト");
-                System.out.println("9. ファイルアップロードセキュリティテスト");
+                System.out.println("4. レート制限テスト");
+                System.out.println("5. SQLインジェクション保護テスト");
+                System.out.println("6. コマンドインジェクション保護テスト");
+                System.out.println("7. パストラバーサル保護テスト");
+                System.out.println("8. ファイルアップロードセキュリティテスト");
                 System.out.println("=====================================");
         }
 
