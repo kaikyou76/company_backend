@@ -42,7 +42,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(createCookieCsrfTokenRepository())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers("/api/csrf/**", "/error"))
+                        .ignoringRequestMatchers("/api/csrf/**", "/error")
+                        .requireCsrfProtectionMatcher(request -> 
+                            !request.getMethod().equals("GET") && 
+                            !request.getRequestURI().equals("/api/auth/logout")))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(401);

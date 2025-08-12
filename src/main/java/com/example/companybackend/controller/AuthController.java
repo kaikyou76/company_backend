@@ -136,7 +136,7 @@ public class AuthController {
      * ログアウト
      */
     @PostMapping("/logout")
-    public ResponseEntity<LogoutResponse> logout(@RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<LogoutResponse> logout(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
         logger.info("ログアウトリクエスト受信");
         
         try {
