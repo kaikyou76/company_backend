@@ -75,6 +75,19 @@ public class JwtTokenProviderServiceImpl implements JwtTokenProviderService {
                 .signWith(secretKey)
                 .compact();
     }
+    
+    @Override
+    public String generateRefreshToken(String username) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshValidityMs);
+        
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(secretKey)
+                .compact();
+    }
 
     @Override
     public boolean validateToken(String token) {

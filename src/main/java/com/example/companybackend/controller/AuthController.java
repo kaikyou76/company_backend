@@ -90,15 +90,21 @@ public class AuthController {
         logger.info("ログインリクエスト受信: employeeCode={}", loginRequest.getEmployeeCode());
 
         try {
-            String accessToken = authService.authenticateUser(loginRequest.getEmployeeCode(), loginRequest.getPassword());
+            // 新しい認証メソッドを使用してアクセストークンとリフレッシュトークンを生成
+            AuthService.AuthResult authResult = authService.authenticateUserWithTokens(
+                    loginRequest.getEmployeeCode(), loginRequest.getPassword());
+            
+            String accessToken = authResult.getAccessToken();
+            String refreshToken = authResult.getRefreshToken();
+            User user = authResult.getUser();
+            
             logger.info("ログイン成功: employeeCode={}", loginRequest.getEmployeeCode());
             
-            // ユーザー情報を取得
-            User user = authService.getUserByUsername(loginRequest.getEmployeeCode());
+            // 部署名と役職名を取得
             String departmentName = authService.getDepartmentNameById(user.getDepartmentId());
             String positionName = authService.getPositionNameById(user.getPositionId());
             
-            LoginResponse response = LoginResponse.success(accessToken, "", user, departmentName, positionName);
+            LoginResponse response = LoginResponse.success(accessToken, refreshToken, user, departmentName, positionName);
             return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
@@ -122,10 +128,42 @@ public class AuthController {
         logger.info("トークンリフレッシュリクエスト受信");
 
         try {
-            // TODO: トークンリフレッシュ処理の実装
+            // リフレッシュトークンを検証
+            String refreshTokenStr = refreshTokenRequest.getRefreshToken();
+            if (refreshTokenStr == null || refreshTokenStr.isEmpty()) {
+                LoginResponse errorResponse = LoginResponse.error("リフレッシュトークンが無効です");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+            
+            // リフレッシュトークンを検証
+            com.example.companybackend.entity.RefreshToken refreshTokenEntity = 
+                authService.validateRefreshToken(refreshTokenStr);
+            
+            // ユーザー情報を取得
+            User user = authService.getUserById(refreshTokenEntity.getUserId());
+            
+            // 新しいアクセストークンを生成
+            String newAccessToken = authService.generateToken(user.getUsername());
+            
+            // 新しいリフレッシュトークンを生成
+            com.example.companybackend.entity.RefreshToken newRefreshTokenEntity = 
+                authService.createRefreshToken(user);
+            String newRefreshToken = newRefreshTokenEntity.getToken();
+            
+            logger.info("トークンリフレッシュ成功: userId={}", user.getId());
+            
+            // 部署名と役職名を取得
+            String departmentName = authService.getDepartmentNameById(user.getDepartmentId());
+            String positionName = authService.getPositionNameById(user.getPositionId());
+            
+            LoginResponse response = LoginResponse.success(newAccessToken, newRefreshToken, user, departmentName, positionName);
+            return ResponseEntity.ok(response);
+            
+        } catch (RuntimeException e) {
+            logger.error("トークンリフレッシュエラー: error={}", e.getMessage());
+            
             LoginResponse errorResponse = LoginResponse.error("リフレッシュトークンが無効です");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            
         } catch (Exception e) {
             logger.error("トークンリフレッシュエラー: error={}", e.getMessage());
             

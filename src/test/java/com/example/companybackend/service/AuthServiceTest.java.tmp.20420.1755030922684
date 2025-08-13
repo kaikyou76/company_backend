@@ -523,11 +523,11 @@ public class AuthServiceTest {
         // Given
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // When & Then
-        assertThrows(RuntimeException.class, () -> {
-            authService.getUserById(999L);
-        });
-        
+        // When
+        Optional<User> result = authService.getUserById(999L);
+
+        // Then
+        assertFalse(result.isPresent());
         verify(userRepository, times(1)).findById(999L);
     }
 

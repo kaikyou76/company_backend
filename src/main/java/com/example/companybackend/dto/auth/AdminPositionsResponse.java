@@ -1,5 +1,6 @@
 package com.example.companybackend.dto.auth;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,6 +11,7 @@ import java.util.List;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class AdminPositionsResponse {
     
     private boolean success;
@@ -36,17 +38,10 @@ public class AdminPositionsResponse {
      */
     @Data
     @Builder
+    @AllArgsConstructor
     public static class PositionData {
         private Long id;
         private String name;
         private Integer level;
-        
-        public PositionData() {}
-        
-        public PositionData(Long id, String name, Integer level) {
-            this.id = id;
-            this.name = name;
-            this.level = level;
-        }
     }
 }

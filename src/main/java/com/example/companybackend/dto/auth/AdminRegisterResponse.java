@@ -68,6 +68,7 @@ public class AdminRegisterResponse {
     }
 
     // 内部クラス：AdminUserData
+    @lombok.Data
     @Builder
     @AllArgsConstructor
     public static class AdminUserData {
@@ -83,120 +84,6 @@ public class AdminRegisterResponse {
 
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
         private OffsetDateTime createdAt;
-
-        public AdminUserData() {}
-
-        public AdminUserData(Long id, String username, String locationType,  // idはLong型
-                           Integer departmentId, String departmentName, Integer positionId, String positionName,
-                           Integer managerId, OffsetDateTime createdAt, String createdByUsername) {
-            this.id = id;
-            this.username = username;
-            this.locationType = locationType;
-            this.departmentId = departmentId;
-            this.departmentName = departmentName;
-            this.positionId = positionId;
-            this.positionName = positionName;
-            this.managerId = managerId;
-            this.createdAt = createdAt;
-            this.createdByUsername = createdByUsername;
-        }
-
-        // Getters and Setters
-        public Long getId() {  // idはLong型
-            return id;
-        }
-
-        public void setId(Long id) {  // idはLong型
-            this.id = id;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getLocationType() {
-            return locationType;
-        }
-
-        public void setLocationType(String locationType) {
-            this.locationType = locationType;
-        }
-
-        public Integer getDepartmentId() {
-            return departmentId;
-        }
-
-        public void setDepartmentId(Integer departmentId) {
-            this.departmentId = departmentId;
-        }
-
-        public String getDepartmentName() {
-            return departmentName;
-        }
-
-        public void setDepartmentName(String departmentName) {
-            this.departmentName = departmentName;
-        }
-
-        public Integer getPositionId() {
-            return positionId;
-        }
-
-        public void setPositionId(Integer positionId) {
-            this.positionId = positionId;
-        }
-
-        public String getPositionName() {
-            return positionName;
-        }
-
-        public void setPositionName(String positionName) {
-            this.positionName = positionName;
-        }
-
-        public Integer getManagerId() {
-            return managerId;
-        }
-
-        public void setManagerId(Integer managerId) {
-            this.managerId = managerId;
-        }
-
-        public String getCreatedByUsername() {
-            return createdByUsername;
-        }
-
-        public void setCreatedByUsername(String createdByUsername) {
-            this.createdByUsername = createdByUsername;
-        }
-
-        public OffsetDateTime getCreatedAt() {
-            return createdAt;
-        }
-
-        public void setCreatedAt(OffsetDateTime createdAt) {
-            this.createdAt = createdAt;
-        }
-
-        @Override
-        public String toString() {
-            return "AdminUserData{" +
-                    "id=" + id +
-                    ", username='" + username + '\'' +
-                    ", locationType=" + locationType +
-                    ", departmentId=" + departmentId +
-                    ", departmentName='" + departmentName + '\'' +
-                    ", positionId=" + positionId +
-                    ", positionName='" + positionName + '\'' +
-                    ", managerId=" + managerId +
-                    ", createdByUsername='" + createdByUsername + '\'' +
-                    ", createdAt=" + createdAt +
-                    '}';
-        }
     }
 
     @Override

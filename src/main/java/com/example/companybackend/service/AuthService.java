@@ -5,9 +5,11 @@ import com.example.companybackend.dto.auth.CsvUserData;
 import com.example.companybackend.entity.Department;
 import com.example.companybackend.entity.Position;
 import com.example.companybackend.entity.User;
+import com.example.companybackend.entity.RefreshToken;
 import com.example.companybackend.repository.DepartmentRepository;
 import com.example.companybackend.repository.PositionRepository;
 import com.example.companybackend.repository.UserRepository;
+import com.example.companybackend.repository.RefreshTokenRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class AuthService {
@@ -35,19 +38,22 @@ public class AuthService {
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProviderService tokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
                        PositionRepository positionRepository,
                        DepartmentRepository departmentRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtTokenProviderService tokenProvider) {
+                       JwtTokenProviderService tokenProvider,
+                       RefreshTokenRepository refreshTokenRepository) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.positionRepository = positionRepository;
         this.departmentRepository = departmentRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     /**
@@ -135,10 +141,18 @@ public class AuthService {
     }
 
     /**
-     * IDによるユーザー取得
+     * IDによるユーザー取得（Optionalを返すバージョン）
      */
-    public Optional<User> getUserById(Long id) {
+    public Optional<User> findUserById(Long id) {
         return userRepository.findById(id);
+    }
+    
+    /**
+     * ユーザーIDからユーザーを取得（例外をスローするバージョン）
+     */
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("ユーザーが見つかりません"));
     }
     
     /**
@@ -154,6 +168,13 @@ public class AuthService {
      */
     public boolean checkUsernameExists(String username) {
         return userRepository.existsByUsername(username);
+    }
+    
+    /**
+     * ユーザー名からアクセストークンを生成
+     */
+    public String generateToken(String username) {
+        return tokenProvider.generateToken(username);
     }
 
     /**
@@ -284,6 +305,47 @@ public class AuthService {
     }
     
     /**
+     * リフレッシュトークンの作成
+     */
+    public RefreshToken createRefreshToken(User user) {
+        // 7日間有効なリフレッシュトークンを生成
+        OffsetDateTime expiryDate = OffsetDateTime.now().plus(7, ChronoUnit.DAYS);
+        
+        // JWTトークンを生成
+        String token = tokenProvider.generateRefreshToken(user.getUsername());
+        
+        // リフレッシュトークンエンティティを作成
+        RefreshToken refreshToken = new RefreshToken(token, user.getId(), expiryDate);
+        
+        // 既存のリフレッシュトークンを削除
+        refreshTokenRepository.deleteByUserId(user.getId());
+        
+        // 新しいリフレッシュトークンを保存
+        return refreshTokenRepository.save(refreshToken);
+    }
+    
+    /**
+     * リフレッシュトークンの検証
+     */
+    public RefreshToken validateRefreshToken(String token) {
+        // トークンの形式を検証
+        if (token == null || token.isEmpty()) {
+            throw new RuntimeException("リフレッシュトークンが無効です");
+        }
+        
+        // データベースからトークンを検索
+        RefreshToken refreshToken = refreshTokenRepository.findValidByToken(token)
+                .orElseThrow(() -> new RuntimeException("リフレッシュトークンが無効です"));
+        
+        // トークンが有効か確認
+        if (!refreshToken.isValid()) {
+            throw new RuntimeException("リフレッシュトークンが無効です");
+        }
+        
+        return refreshToken;
+    }
+    
+    /**
      * 安全なdouble変換
      */
     private Double parseDoubleSafely(String value, String line) {
@@ -303,5 +365,47 @@ public class AuthService {
         } catch (NumberFormatException e) {
             throw new RuntimeException("数値変換エラー (integer): " + value + " in line: " + line);
         }
+    }
+    
+    /**
+     * ユーザー認証とトークン・リフレッシュトークン生成
+     */
+    public AuthResult authenticateUserWithTokens(String username, String password) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            // アクセストークンを生成
+            String accessToken = tokenProvider.generateToken(authentication);
+            
+            // ユーザー情報を取得
+            User user = getUserByUsername(username);
+            
+            // リフレッシュトークンを生成
+            RefreshToken refreshTokenEntity = createRefreshToken(user);
+            String refreshToken = refreshTokenEntity.getToken();
+            
+            return new AuthResult(accessToken, refreshToken, user);
+        } catch (Exception e) {
+            throw new RuntimeException("認証に失敗しました: " + e.getMessage());
+        }
+    }
+    
+    public static class AuthResult {
+        private final String accessToken;
+        private final String refreshToken;
+        private final User user;
+        
+        public AuthResult(String accessToken, String refreshToken, User user) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+            this.user = user;
+        }
+        
+        public String getAccessToken() { return accessToken; }
+        public String getRefreshToken() { return refreshToken; }
+        public User getUser() { return user; }
     }
 }
