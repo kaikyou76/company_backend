@@ -29,7 +29,8 @@ public class CsrfConfigurationProperties {
                         "http://localhost:3000",
                         "http://localhost:8080",
                         "https://localhost:3000",
-                        "https://localhost:8080");
+                        "https://localhost:8080",
+                        "https://main.d1inikqen7hbn4.amplifyapp.com");
 
         /**
          * 除外パス（CSRF保護を適用しないパス）
