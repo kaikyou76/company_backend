@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -76,6 +77,7 @@ public class AuthService {
     /**
      * ユーザー登録（一般）
      */
+    @Transactional
     public User registerUser(User user) {
         // ユーザー名重複チェック
         if (userRepository.existsByUsername(user.getUsername())) {
@@ -101,6 +103,7 @@ public class AuthService {
     /**
      * 管理者によるユーザー登録
      */
+    @Transactional
     public User registerUserByAdmin(User user, String adminUsername) {
         // 管理者権限チェック
         User adminUser = userRepository.findByUsername(adminUsername)
@@ -221,6 +224,7 @@ public class AuthService {
     /**
      * CSVからのユーザー一括登録
      */
+    @Transactional
     public int[] registerUsersFromCsv(List<CsvUserData> csvUsers) {
         int successCount = 0;
         int errorCount = 0;
@@ -307,6 +311,7 @@ public class AuthService {
     /**
      * リフレッシュトークンの作成
      */
+    @Transactional
     public RefreshToken createRefreshToken(User user) {
         // 7日間有効なリフレッシュトークンを生成
         OffsetDateTime expiryDate = OffsetDateTime.now().plus(7, ChronoUnit.DAYS);
@@ -370,6 +375,7 @@ public class AuthService {
     /**
      * ユーザー認証とトークン・リフレッシュトークン生成
      */
+    @Transactional
     public AuthResult authenticateUserWithTokens(String username, String password) {
         try {
             Authentication authentication = authenticationManager.authenticate(
