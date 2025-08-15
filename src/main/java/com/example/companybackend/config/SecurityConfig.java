@@ -1,7 +1,9 @@
 package com.example.companybackend.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -27,6 +29,15 @@ import java.util.Arrays;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private SecurityProperties securityProperties;
+
+    @Autowired
+    private CsrfProperties csrfProperties;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -43,9 +54,8 @@ public class SecurityConfig {
                         .csrfTokenRepository(createCookieCsrfTokenRepository())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .ignoringRequestMatchers("/api/csrf/**", "/error")
-                        .requireCsrfProtectionMatcher(request -> 
-                            !request.getMethod().equals("GET") && 
-                            !request.getRequestURI().equals("/api/auth/logout")))
+                        .requireCsrfProtectionMatcher(request -> !request.getMethod().equals("GET") &&
+                                !request.getRequestURI().equals("/api/auth/logout")))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(401);
@@ -64,11 +74,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://main.d1inikqen7hbn4.amplifyapp.com"));
+
+        // 環境別のallowed-originsを使用
+        configuration.setAllowedOrigins(Arrays.asList(securityProperties.getAllowedOrigins()));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "X-CSRF-TOKEN", "X-XSRF-TOKEN"));
+        configuration.setMaxAge((long) securityProperties.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -81,7 +94,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -91,9 +105,15 @@ public class SecurityConfig {
      */
     private CookieCsrfTokenRepository createCookieCsrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        repository.setCookieName("XSRF-TOKEN");  // フロントエンドが期待するCookie名
-        repository.setHeaderName("X-XSRF-TOKEN");  // フロントエンドが送信するヘッダー名
-        repository.setParameterName("_csrf");  // フォームパラメータ名
+        repository.setCookieName("XSRF-TOKEN"); // フロントエンドが期待するCookie名
+        repository.setHeaderName("X-XSRF-TOKEN"); // フロントエンドが送信するヘッダー名
+        repository.setParameterName("_csrf"); // フォームパラメータ名
+
+        // 注意: Spring SecurityのCookieCsrfTokenRepositoryでは
+        // setCookieSecureやsetCookieDomainメソッドが利用できない場合があります
+        // これらの設定は、application.propertiesのserver.servlet.session.cookie.*
+        // またはカスタムCookieSerializerで設定する必要があります
+
         return repository;
     }
 }

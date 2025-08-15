@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,18 +16,18 @@ import java.util.Map;
  * 機能:
  * - Spring SecurityのCSRFトークンの配布
  * - セキュリティ状態の確認
+ * - トークンリフレッシュ機能
  */
 @RestController
 @RequestMapping("/api/csrf")
+@CrossOrigin(origins = { "http://localhost:3000",
+        "https://main.d1inikqen7hbn4.amplifyapp.com" }, allowCredentials = "true")
 public class CsrfController {
 
     private static final Logger log = LoggerFactory.getLogger(CsrfController.class);
 
     /**
-     * Spring SecurityのCSRFトークンを取得
-     * 
-     * @param request HTTPリクエスト
-     * @return CSRFトークン情報
+     * CSRFトークンを取得
      */
     @GetMapping("/token")
     public ResponseEntity<Map<String, Object>> getCsrfToken(HttpServletRequest request) {
@@ -61,8 +62,13 @@ public class CsrfController {
             responseBody.put("csrfToken", csrfToken.getToken());
             responseBody.put("headerName", csrfToken.getHeaderName());
             responseBody.put("parameterName", csrfToken.getParameterName());
-            responseBody.put("expiresIn", 30 * 60); // 30分（秒）
+            responseBody.put("expiresIn", 3600); // 1時間
             responseBody.put("message", "CSRF token generated successfully");
+
+            // 環境情報を追加
+            responseBody.put("protocol", request.getScheme());
+            responseBody.put("serverName", request.getServerName());
+            responseBody.put("serverPort", request.getServerPort());
 
             log.info("CSRF token provided: {}... (header: {}, parameter: {})",
                     csrfToken.getToken().substring(0, Math.min(10, csrfToken.getToken().length())),
@@ -98,10 +104,7 @@ public class CsrfController {
     }
 
     /**
-     * CSRF保護の状態を確認
-     * 
-     * @param request HTTPリクエスト
-     * @return CSRF保護の状態情報
+     * CSRFトークンの検証状態を確認
      */
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getCsrfStatus(HttpServletRequest request) {
