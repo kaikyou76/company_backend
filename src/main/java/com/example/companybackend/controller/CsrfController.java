@@ -21,7 +21,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/csrf")
 @CrossOrigin(origins = { "http://localhost:3000",
-        "https://main.d1inikqen7hbn4.amplifyapp.com" }, allowCredentials = "true")
+        "https://main.d1inikqen7hbn4.amplifyapp.com",
+        "https://www.kaikyou.dpdns.org" }, allowCredentials = "true")
 public class CsrfController {
 
     private static final Logger log = LoggerFactory.getLogger(CsrfController.class);
