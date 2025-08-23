@@ -40,16 +40,14 @@ public class JwtTokenProvider {
         System.out.println("Token validity from properties: " + tokenValidityInMillis + " ms");
         System.out.println("Refresh expiration from properties: " + refreshExpiration + " ms");
         
-        // 使用更安全の密钥生成方式
-        this.secretKey = Keys.hmacShaKeyFor(Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded());
+        // 使用配置ファイル中の密钥生成SecretKey
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         
-        // 尝試从数据库获取JWT过期配置，如果获取不到则使用默认値
-        long dbTokenValidity = getTokenValidityFromDatabase(jdbcTemplate);
-        this.tokenValidityInMilliseconds = dbTokenValidity != -1 ? dbTokenValidity : tokenValidityInMillis;
+        // 直接使用配置ファイル中の値，不查询数据库
+        this.tokenValidityInMilliseconds = tokenValidityInMillis;
         
         System.out.println("JWT Token Validity Configuration:");
-        System.out.println("  Default value from properties: " + tokenValidityInMillis + " ms");
-        System.out.println("  Value from database: " + dbTokenValidity + " ms");
+        System.out.println("  Value from properties: " + tokenValidityInMillis + " ms");
         System.out.println("  Final value used: " + this.tokenValidityInMilliseconds + " ms");
         
         this.refreshExpiration = refreshExpiration;
@@ -58,26 +56,7 @@ public class JwtTokenProvider {
         System.out.println("=== End JWT Configuration Debug ===");
     }
 
-    /**
-     * 从数据库获取JWTトークン有效期
-     * @param jdbcTemplate データベースアクセステンプレート
-     * @return トークン有效期（ミリ秒），もしそれが見つからなければ-1
-     */
-    private long getTokenValidityFromDatabase(JdbcTemplate jdbcTemplate) {
-        try {
-            Long validity = jdbcTemplate.queryForObject(
-                "SELECT config_value::bigint FROM security_test_config WHERE config_key = 'jwt.test.expiration' AND is_active = true",
-                Long.class
-            );
-            System.out.println("Successfully retrieved JWT expiration from database: " + validity + " ms");
-            return validity != null ? validity : -1;
-        } catch (Exception e) {
-            log.warn("データベースからJWT有効期限を取得できませんでした。デフォルト値を使用します。エラー: {}", e.getMessage());
-            System.out.println("Failed to get JWT expiration from database: " + e.getMessage());
-            return -1;
-        }
-    }
-
+    
     /**
      * JWT アクセストークン生成（ユーザーオブジェクト直接指定）
      */
